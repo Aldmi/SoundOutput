@@ -30,6 +30,7 @@
         {
             this.btn_load = new System.Windows.Forms.Button();
             this.chList_LoadedFiles = new DevExpress.XtraEditors.CheckedListBoxControl();
+            this.btn_PlayAll = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.chList_LoadedFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -53,11 +54,23 @@
             this.chList_LoadedFiles.Size = new System.Drawing.Size(481, 375);
             this.chList_LoadedFiles.TabIndex = 1;
             // 
+            // btn_PlayAll
+            // 
+            this.btn_PlayAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btn_PlayAll.Location = new System.Drawing.Point(534, 27);
+            this.btn_PlayAll.Name = "btn_PlayAll";
+            this.btn_PlayAll.Size = new System.Drawing.Size(199, 53);
+            this.btn_PlayAll.TabIndex = 2;
+            this.btn_PlayAll.Text = "Play all";
+            this.btn_PlayAll.UseVisualStyleBackColor = true;
+            this.btn_PlayAll.Click += new System.EventHandler(this.btn_PlayAll_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1077, 489);
+            this.Controls.Add(this.btn_PlayAll);
             this.Controls.Add(this.chList_LoadedFiles);
             this.Controls.Add(this.btn_load);
             this.Name = "MainForm";
@@ -71,5 +84,6 @@
 
         private System.Windows.Forms.Button btn_load;
         private DevExpress.XtraEditors.CheckedListBoxControl chList_LoadedFiles;
+        private System.Windows.Forms.Button btn_PlayAll;
     }
 }

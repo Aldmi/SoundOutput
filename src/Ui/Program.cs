@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SoundQueue.Concrete;
+using SoundQueue.Abstract;
+using BL;
 
 namespace Ui
 {
@@ -16,7 +19,12 @@ namespace Ui
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+
+
+            //TODO:передавать через DI
+            var spc = new SoundPlayerConsumer(new SoundQueue.Concrete.SoundQueue());
+            Application.Run(new MainForm(spc));
         }
     }
 }
