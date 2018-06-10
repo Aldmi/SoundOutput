@@ -1,0 +1,11 @@
+D:\Git\SoundOutput\SoundQueue\bin\Debug\SoundQueue.dll
+D:\Git\SoundOutput\SoundQueue\bin\Debug\SoundQueue.pdb
+D:\Git\SoundOutput\SoundQueue\bin\Debug\Libs.dll
+D:\Git\SoundOutput\SoundQueue\bin\Debug\SoundPlayer.dll
+D:\Git\SoundOutput\SoundQueue\bin\Debug\NAudio.dll
+D:\Git\SoundOutput\SoundQueue\bin\Debug\Libs.pdb
+D:\Git\SoundOutput\SoundQueue\bin\Debug\SoundPlayer.pdb
+D:\Git\SoundOutput\SoundQueue\bin\Debug\NAudio.xml
+D:\Git\SoundOutput\SoundQueue\obj\Debug\SoundQueue.csprojResolveAssemblyReference.cache
+D:\Git\SoundOutput\SoundQueue\obj\Debug\SoundQueue.dll
+D:\Git\SoundOutput\SoundQueue\obj\Debug\SoundQueue.pdb

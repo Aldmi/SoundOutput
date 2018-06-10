@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ui", "Ui\Ui.csproj", "{4F21D58E-E18E-4324-872E-B22E6FC1F0D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundPlayer", "SoundPlayer\SoundPlayer.csproj", "{836BFF92-5425-4912-A060-1BDD6DB4F897}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundQueue", "SoundQueue\SoundQueue.csproj", "{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Libs", "Libs\Libs.csproj", "{68EA08F3-8F87-40F0-AE17-F57160B1ADF5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F21D58E-E18E-4324-872E-B22E6FC1F0D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F21D58E-E18E-4324-872E-B22E6FC1F0D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F21D58E-E18E-4324-872E-B22E6FC1F0D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F21D58E-E18E-4324-872E-B22E6FC1F0D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{836BFF92-5425-4912-A060-1BDD6DB4F897}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{836BFF92-5425-4912-A060-1BDD6DB4F897}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{836BFF92-5425-4912-A060-1BDD6DB4F897}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{836BFF92-5425-4912-A060-1BDD6DB4F897}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68EA08F3-8F87-40F0-AE17-F57160B1ADF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68EA08F3-8F87-40F0-AE17-F57160B1ADF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68EA08F3-8F87-40F0-AE17-F57160B1ADF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68EA08F3-8F87-40F0-AE17-F57160B1ADF5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

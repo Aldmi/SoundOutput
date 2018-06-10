@@ -1,0 +1,5 @@
+D:\Git\SoundOutput\Libs\bin\Debug\Libs.dll
+D:\Git\SoundOutput\Libs\bin\Debug\Libs.pdb
+D:\Git\SoundOutput\Libs\obj\Debug\Libs.csprojResolveAssemblyReference.cache
+D:\Git\SoundOutput\Libs\obj\Debug\Libs.dll
+D:\Git\SoundOutput\Libs\obj\Debug\Libs.pdb

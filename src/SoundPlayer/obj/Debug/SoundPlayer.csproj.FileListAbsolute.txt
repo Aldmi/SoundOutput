@@ -1,0 +1,9 @@
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\SoundPlayer.dll
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\SoundPlayer.pdb
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\Libs.dll
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\NAudio.dll
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\Libs.pdb
+D:\Git\SoundOutput\SoundPlayer\bin\Debug\NAudio.xml
+D:\Git\SoundOutput\SoundPlayer\obj\Debug\SoundPlayer.csprojResolveAssemblyReference.cache
+D:\Git\SoundOutput\SoundPlayer\obj\Debug\SoundPlayer.dll
+D:\Git\SoundOutput\SoundPlayer\obj\Debug\SoundPlayer.pdb
