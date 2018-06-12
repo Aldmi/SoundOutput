@@ -102,6 +102,10 @@
       <Project>{68ea08f3-8f87-40f0-ae17-f57160b1adf5}</Project>
       <Name>Libs</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SoundPlayer\SoundPlayer.csproj">
+      <Project>{836bff92-5425-4912-a060-1bdd6db4f897}</Project>
+      <Name>SoundPlayer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SoundQueue\SoundQueue.csproj">
       <Project>{7CFDDCF3-074C-4A80-9197-76DBFD256CC3}</Project>
       <Name>SoundQueue</Name>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reactive.Subjects;
+using System.Threading;
 using System.Threading.Tasks;
 using NAudio.Wave;
 using SoundPlayer.Converters;
@@ -18,52 +19,36 @@ namespace SoundPlayer.Abstract
 
     public enum SoundPlayerType
     {
-        None, DirectX, Omneo
+        None,
+        NAudio,
+        DirectX,
+        Omneo
     }
 
 
 
     public interface ISoundPlayer : IDisposable
     {
-        Task<bool> PlayFile(SoundMessage soundMessage, bool useFileNameConverter = true);
-        Task<bool> Play();
+        Task<bool> PlayFile(SoundMessage soundMessage, CancellationToken cts);
+        Task<bool> Play(CancellationToken cts);
+
         void Pause();
+        void Play();
+
         float GetDuration();
-        int GetCurrentPosition();
+        long GetCurrentPosition();
         SoundPlayerStatus GetPlayerStatus();
-        int GetVolume();
-        void SetVolume(int volume);
+        double GetVolume();
+        void SetVolume(double volume);
 
 
         Task ReConnect();
         SoundPlayerType PlayerType { get; }
         bool IsConnect { get; }
-        string GetInfo();
+        string Info { get; }
         string StatusString { get; }
-
-        IFileNameConverter FileNameConverter { get; }  // конверетер имени проигрываемого файла в имя понятное конкретному плееру 
 
         Subject<string> StatusStringChangeRx { get; }  //Изменение StatusString
         Subject<bool> IsConnectChangeRx { get; }       //Изменение IsConnect
-
-
-
-
-
-
-        //-----------------------------------------------------------------
-
-        //bool PlayFile(string file);
-        //void Play();
-        //void Pause();
-        //void Stop();
-
-        //float GetVolume();
-        //void SetVolume(float volume);
-
-        //long GetCurrentPosition();
-        //TimeSpan? GetDuration();
-
-        //PlaybackState GetStatus();
     }
 }

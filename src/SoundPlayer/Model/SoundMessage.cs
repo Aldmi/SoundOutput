@@ -42,6 +42,7 @@ namespace SoundPlayer.Model
         public int? ParentId { get; set; } //Id родителя, стастика- null, динамика- СостояниеФормируемогоСообщенияИШаблон.Id
 
         public string ИмяВоспроизводимогоФайла { get; set; }
+        public string ПутьКФайлу { get; set; }
         public NotificationLanguage Язык { get; set; }
         public int? ВремяПаузы { get; set; } //Если указанно, значит сообщение это пауза
 

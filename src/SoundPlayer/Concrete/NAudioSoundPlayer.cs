@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Reactive.Subjects;
+using System.Threading;
 using System.Threading.Tasks;
 using NAudio.Wave;
 using SoundPlayer.Abstract;
-using SoundPlayer.Converters;
 using SoundPlayer.Model;
+
 
 namespace SoundPlayer.Concrete
 {
@@ -13,6 +14,12 @@ namespace SoundPlayer.Concrete
         #region field
 
         private object _locker = new object();
+
+        private readonly Func<int> _выборУровняГромкостиFunc;
+
+        private IWavePlayer _waveOutDevice;
+        private AudioFileReader _audioFileReader;
+
         //private readonly Log _loggerSoundPlayer = new Log("Sound.SoundQueue");
 
         #endregion
@@ -22,8 +29,56 @@ namespace SoundPlayer.Concrete
 
         #region prop
 
-        public IWavePlayer WaveOutDevice { get; set; }
-        public AudioFileReader AudioFileReader { get; set; }
+        public SoundPlayerType PlayerType => SoundPlayerType.NAudio;
+        public string Info => "NAudio Player";
+
+
+        private string _statusString;             //TODO: где меняется?
+        public string StatusString
+        {
+            get { return _statusString; }
+            set
+            {
+                if (value == _statusString) return;
+                _statusString = value;
+                StatusStringChangeRx.OnNext(_statusString);
+            }
+        }
+
+        private bool _isConnect;
+        public bool IsConnect
+        {
+            get { return _isConnect; }
+            set
+            {
+                if (value == _isConnect) return;
+                _isConnect = value;
+                IsConnectChangeRx.OnNext(_isConnect);
+            }
+        }
+
+        #endregion
+
+
+
+
+        #region ctor
+
+        public NAudioSoundPlayer(Func<int> выборУровняГромкостиFunc)
+        {
+            _выборУровняГромкостиFunc = выборУровняГромкостиFunc;
+            IsConnect = true;
+        }
+
+        #endregion
+
+
+
+
+        #region RxEvent
+
+        public Subject<string> StatusStringChangeRx { get; } = new Subject<string>(); //Изменение StatusString
+        public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>(); //Изменение IsConnect
 
         #endregion
 
@@ -31,154 +86,208 @@ namespace SoundPlayer.Concrete
 
 
 
-
-
         #region Methode 
 
-        //public bool PlayFile(string file)
-        //{
-        //    lock (_locker)
-        //    {
-        //        if (AudioFileReader != null)
-        //        {
-        //            AudioFileReader.Dispose();
-        //            AudioFileReader = null;
-        //        }
+        public async Task<bool> PlayFile(SoundMessage soundMessage, CancellationToken cts)
+        {
+            if (_audioFileReader != null)
+            {
+                _audioFileReader.Dispose();
+                _audioFileReader = null;
+            }
 
-        //        try
-        //        {
-        //            if (System.IO.File.Exists(file))
-        //            {
-        //                AudioFileReader = new AudioFileReader(file);
+            try
+            {
+                var filePath = soundMessage.ПутьКФайлу;
+                _audioFileReader = new AudioFileReader(filePath);
 
-        //                WaveOutDevice?.Stop();
-        //                WaveOutDevice?.Dispose();
-        //                WaveOutDevice = new WaveOut();
+                _waveOutDevice?.Stop();
+                _waveOutDevice?.Dispose();
+                _waveOutDevice = new WaveOut();
+                _waveOutDevice.Init(_audioFileReader);
 
-        //                WaveOutDevice.Init(AudioFileReader);
+                SetVolume(0.9f);
+                return await Play(cts);
+            }
+            catch (Exception ex)
+            {
+                //_loggerSoundPlayer.Info($"PlayFile In player: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
+            }
 
-        //                SetVolume(0.9f);
-        //                Play();
-
-        //                return true;
-        //            }
-
-        //            //_loggerSoundPlayer.Info($"PlayFile In player: {file} FILE NOT FOUND ????????????????????");
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            //_loggerSoundPlayer.Info($"PlayFile In player: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
-        //        }
-
-        //        return false;
-        //    }
-        //}
+            return false;
+        }
 
 
 
+        /// <summary>
+        /// Проиграть файл
+        /// </summary>
+        /// <returns>true - Успешно запущенно проигрывание</returns>
+        public async Task<bool> Play(CancellationToken cts)
+        {
+            if (_audioFileReader == null)
+            {
+                // _loggerSoundPlayer.Info($"PlayFile In Play methode: AudioFileReader == null !!!!!!!!!!!!!!!!!!!!");
+                return false;
+            }
 
-        //public void Play()
-        //{
-        //    if (AudioFileReader == null)
-        //    {
-        //        lock (_locker)
-        //        {
-        //            // _loggerSoundPlayer.Info($"PlayFile In Play methode: AudioFileReader == null !!!!!!!!!!!!!!!!!!!!");
-        //        }
-        //        return;
-        //    }
-
-        //    try
-        //    {
-        //        if (WaveOutDevice.PlaybackState == PlaybackState.Paused ||
-        //            WaveOutDevice.PlaybackState == PlaybackState.Stopped)
-        //        {
-        //            WaveOutDevice.Play();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        lock (_locker)
-        //        {
-        //            //_loggerSoundPlayer.Info($"PlayFile In Play methode: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
-        //        }
-        //        throw;
-        //    }
-        //}
-
-
-        //public void Pause()
-        //{
-        //    if (AudioFileReader == null)
-        //        return;
-
-        //    try
-        //    {
-        //        if (WaveOutDevice.PlaybackState == PlaybackState.Playing)
-        //            WaveOutDevice.Pause();
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e);
-        //        throw;
-        //    }
-        //}
-
-
-        //public void Stop()
-        //{
-        //    if (AudioFileReader == null)
-        //        return;
-
-        //    try
-        //    {
-        //        if (WaveOutDevice.PlaybackState == PlaybackState.Playing)
-        //            WaveOutDevice.Stop();
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e);
-        //        throw;
-        //    }
-        //}
-
-
-        //public float GetVolume()
-        //{
-        //    return AudioFileReader?.Volume ?? 0f;
-        //}
+            try
+            {
+                if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
+                    _waveOutDevice.PlaybackState == PlaybackState.Stopped)
+                {
+                    await PlayWithControl(CancellationToken.None);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                //_loggerSoundPlayer.Info($"PlayFile In Play methode: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
+                throw;
+            }
+        }
 
 
 
-        ////1.0f is full volume
-        //public void SetVolume(float volume)
-        //{
-        //    if (AudioFileReader != null)
-        //    {
-        //        AudioFileReader.Volume = volume;
-        //    }
-        //}
+        public void Play()
+        {
+            if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
+                _waveOutDevice.PlaybackState == PlaybackState.Stopped)
+            {
+                //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
+                _waveOutDevice.Play();
+            }
+        }
 
 
 
-        //public long GetCurrentPosition()
-        //{
-        //    return AudioFileReader?.Position ?? 0;
-        //}
+        private TaskCompletionSource<PlaybackState> _tcs;
+        private Task<PlaybackState> PlayWithControl(CancellationToken ct)
+        {
+            //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
+            _waveOutDevice.Play();
+
+            var cts= new CancellationTokenSource();
+            _tcs = new TaskCompletionSource<PlaybackState>();
+            Task.Run(() =>
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    switch (_waveOutDevice.PlaybackState)
+                    {
+                       // case PlaybackState.Paused:
+                        case PlaybackState.Stopped:
+                            _tcs.TrySetResult(_waveOutDevice.PlaybackState);
+                            cts.Cancel();
+                            break;
+                    }
+                }
+
+            }, cts.Token);
+
+            return  _tcs.Task;
+        }
+
+
+        public void Pause()
+        {
+            if (_audioFileReader == null)
+                return;
+
+            try
+            {
+                if (_waveOutDevice.PlaybackState == PlaybackState.Playing)
+                    _waveOutDevice.Pause();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
 
 
 
-        //public TimeSpan? GetDuration()
-        //{
-        //    return AudioFileReader?.TotalTime ?? null;
-        //}
+        public void Stop()
+        {
+            if (_audioFileReader == null)
+                return;
+
+            try
+            {
+                if (_waveOutDevice.PlaybackState == PlaybackState.Playing)
+                    _waveOutDevice.Stop();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public double GetVolume()
+        {
+            return _audioFileReader?.Volume ?? 0f;
+        }
 
-        //public PlaybackState GetStatus()
-        //{
-        //    return WaveOutDevice?.PlaybackState ?? PlaybackState.Stopped;
-        //}
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="volume">1.0f is full volume</param>
+        public void SetVolume(double volume)
+        {
+            if (_audioFileReader != null)
+            {
+                _audioFileReader.Volume = (float)volume;
+            }
+        }
+
+
+        public float GetDuration()
+        {
+            return _audioFileReader?.Volume ?? 0f;
+        }
+
+
+        public long GetCurrentPosition()
+        {
+            return _audioFileReader?.Position ?? 0;
+        }
+
+
+        public SoundPlayerStatus GetPlayerStatus()
+        {
+            var state = _waveOutDevice?.PlaybackState;
+            switch (state)
+            {
+                case null:
+                case PlaybackState.Stopped:
+                    return SoundPlayerStatus.Stop;
+
+                case PlaybackState.Playing:
+                    return SoundPlayerStatus.Playing;
+
+                case PlaybackState.Paused:
+                    return SoundPlayerStatus.Paused;
+
+                default:
+                    return SoundPlayerStatus.Idle;
+            }
+        }
+
+
+        public async Task ReConnect()
+        {
+            await Task.CompletedTask;
+            IsConnect = true;
+        }
 
         #endregion
 
@@ -189,73 +298,14 @@ namespace SoundPlayer.Concrete
 
         public void Dispose()
         {
-            if (WaveOutDevice != null)
+            if (_waveOutDevice != null)
             {
-                WaveOutDevice.Stop();
-                WaveOutDevice.Dispose();
+                _waveOutDevice.Stop();
+                _waveOutDevice.Dispose();
             }
         }
 
         #endregion
-
-
-
-        public Task<bool> PlayFile(SoundMessage soundMessage, bool useFileNameConverter = true)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> Play()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Pause()
-        {
-            throw new NotImplementedException();
-        }
-
-        public float GetDuration()
-        {
-            throw new NotImplementedException();
-        }
-
-        public int GetCurrentPosition()
-        {
-            throw new NotImplementedException();
-        }
-
-        public SoundPlayerStatus GetPlayerStatus()
-        {
-            throw new NotImplementedException();
-        }
-
-        public int GetVolume()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetVolume(int volume)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task ReConnect()
-        {
-            throw new NotImplementedException();
-        }
-
-        public SoundPlayerType PlayerType { get; }
-        public bool IsConnect { get; }
-        public string GetInfo()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string StatusString { get; }
-        public IFileNameConverter FileNameConverter { get; }
-        public Subject<string> StatusStringChangeRx { get; }
-        public Subject<bool> IsConnectChangeRx { get; }
     }
 }
 

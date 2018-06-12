@@ -18,12 +18,7 @@ namespace Ui
     {
         private readonly SoundPlayerConsumer _soundPlayerConsumer;
 
-
-
-
         public List<FileInfo> LoadList { get; set; }
-
-
 
 
 
@@ -31,6 +26,7 @@ namespace Ui
         public MainForm(SoundPlayerConsumer soundPlayerConsumer)
         {
             _soundPlayerConsumer = soundPlayerConsumer;
+ 
             InitializeComponent();
         }
 
@@ -39,7 +35,17 @@ namespace Ui
 
         protected override void OnLoad(EventArgs e)
         {
+            var taskSoundQueue = _soundPlayerConsumer.Start();
+            Program.BackGroundTasks.Add(taskSoundQueue);
+
             base.OnLoad(e);
+        }
+
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _soundPlayerConsumer.Dispose(); //При закрытии формы вручную уничтожить потребителя очереди, а он уничтожить очередь с плеером
+            base.OnClosed(e);
         }
 
 
@@ -61,13 +67,61 @@ namespace Ui
         }
 
 
+        private void btn_AddInQueue_Click(object sender, EventArgs e)
+        {
+            if (LoadList == null || !LoadList.Any())
+            {
+                MessageBox.Show(@"Список файлов пуст");
+            }
+
+            _soundPlayerConsumer.AddInQueue(LoadList);
+
+        }
+
+
         private void btn_PlayAll_Click(object sender, EventArgs e)
         {
-            var first = LoadList.FirstOrDefault();
-            var fileName = first.FullName;
-            //NAudioSoundPlayer player = new NAudioSoundPlayer();
-            //player.PlayFile(fileName);
+          _soundPlayerConsumer.PlayLIstFiles();
         }
-       
+
+
+        private bool _stopQueue;
+        private void btn_StopQueue_Click(object sender, EventArgs e)
+        {
+            if (_stopQueue)
+            {
+                var taskSoundQueue = _soundPlayerConsumer.Start();
+                Program.BackGroundTasks.Add(taskSoundQueue);
+                _stopQueue = false;
+                btn_StopQueue.Text = "Stop Queue";
+            }
+            else
+            {
+                _soundPlayerConsumer.Stop();
+                _stopQueue = true;
+                btn_StopQueue.Text = "Start Queue";
+            }
+    
+        }
+
+
+
+
+        private bool _pausePlayer;
+        private void btnPause_Click(object sender, EventArgs e)
+        {
+            if (_pausePlayer)
+            {
+                _soundPlayerConsumer.PlayPlayer();
+                _pausePlayer = false;
+                btn_StopQueue.Text = "pause player";
+            }
+            else
+            {
+                _soundPlayerConsumer.PausePlayer();
+                _pausePlayer = true;
+                btnPause.Text = "play player";
+            }
+        }
     }
 }
