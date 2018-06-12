@@ -71,13 +71,17 @@ namespace SoundQueue.Concrete
 
         public void PausePlayer()
         {
-            // StopQueue();
             _player.Pause();
+        }
+
+
+        public void StopPlayer()
+        {
+            _player.Stop();
         }
 
         public void PlayPlayer()
         {
-            //await StartQueue();
             _player.Play();
         }
 
@@ -143,7 +147,7 @@ namespace SoundQueue.Concrete
         public void Erase()
         {
             Clear();
-            _player.PlayFile(null, CancellationToken.None);
+            _player.Stop();
         }
 
 

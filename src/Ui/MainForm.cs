@@ -35,7 +35,7 @@ namespace Ui
 
         protected override void OnLoad(EventArgs e)
         {
-            var taskSoundQueue = _soundPlayerConsumer.Start();
+            var taskSoundQueue = _soundPlayerConsumer.StartQueue();
             Program.BackGroundTasks.Add(taskSoundQueue);
 
             base.OnLoad(e);
@@ -90,14 +90,14 @@ namespace Ui
         {
             if (_stopQueue)
             {
-                var taskSoundQueue = _soundPlayerConsumer.Start();
+                var taskSoundQueue = _soundPlayerConsumer.StartQueue();
                 Program.BackGroundTasks.Add(taskSoundQueue);
                 _stopQueue = false;
                 btn_StopQueue.Text = "Stop Queue";
             }
             else
             {
-                _soundPlayerConsumer.Stop();
+                _soundPlayerConsumer.StopQueue();
                 _stopQueue = true;
                 btn_StopQueue.Text = "Start Queue";
             }
@@ -114,7 +114,7 @@ namespace Ui
             {
                 _soundPlayerConsumer.PlayPlayer();
                 _pausePlayer = false;
-                btn_StopQueue.Text = "pause player";
+                btnPause.Text = "pause player";
             }
             else
             {
@@ -122,6 +122,36 @@ namespace Ui
                 _pausePlayer = true;
                 btnPause.Text = "play player";
             }
+        }
+
+
+        private bool _stopPlayer;
+        private void btn_StopPlayer_Click(object sender, EventArgs e)
+        {
+            if (_stopPlayer)
+            {
+                _soundPlayerConsumer.PlayPlayer();
+                _stopPlayer = false;
+                btn_StopPlayer.Text = "stop player";
+            }
+            else
+            {
+                _soundPlayerConsumer.StopPlayer();
+                _stopPlayer = true;
+                btn_StopPlayer.Text = "play player";
+            }
+        }
+
+
+
+        private void btn_ClearQueue_Click(object sender, EventArgs e)
+        {
+            _soundPlayerConsumer.ClearQueue();
+        }
+
+        private void btn_EraseQueue_Click(object sender, EventArgs e)
+        {
+            _soundPlayerConsumer.EraseQueue();
         }
     }
 }

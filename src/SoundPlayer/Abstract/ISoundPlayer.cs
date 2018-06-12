@@ -33,6 +33,7 @@ namespace SoundPlayer.Abstract
         Task<bool> Play(CancellationToken cts);
 
         void Pause();
+        void Stop();
         void Play();
 
         float GetDuration();
@@ -40,7 +41,6 @@ namespace SoundPlayer.Abstract
         SoundPlayerStatus GetPlayerStatus();
         double GetVolume();
         void SetVolume(double volume);
-
 
         Task ReConnect();
         SoundPlayerType PlayerType { get; }

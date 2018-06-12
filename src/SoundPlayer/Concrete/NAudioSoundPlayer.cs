@@ -155,7 +155,6 @@ namespace SoundPlayer.Concrete
             if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
                 _waveOutDevice.PlaybackState == PlaybackState.Stopped)
             {
-                //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
                 _waveOutDevice.Play();
             }
         }
@@ -165,10 +164,17 @@ namespace SoundPlayer.Concrete
         private TaskCompletionSource<PlaybackState> _tcs;
         private Task<PlaybackState> PlayWithControl(CancellationToken ct)
         {
-            //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
-            _waveOutDevice.Play();
+            var cts = new CancellationTokenSource();
+            try
+            {
+                //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
+                _waveOutDevice.Play();
+            }
+            catch (Exception ex)
+            {
+                cts.Cancel();
+            }
 
-            var cts= new CancellationTokenSource();
             _tcs = new TaskCompletionSource<PlaybackState>();
             Task.Run(() =>
             {
@@ -176,7 +182,6 @@ namespace SoundPlayer.Concrete
                 {
                     switch (_waveOutDevice.PlaybackState)
                     {
-                       // case PlaybackState.Paused:
                         case PlaybackState.Stopped:
                             _tcs.TrySetResult(_waveOutDevice.PlaybackState);
                             cts.Cancel();

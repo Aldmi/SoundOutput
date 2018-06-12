@@ -24,15 +24,24 @@ namespace BL
 
 
 
-        public async Task Start()
+        public async Task StartQueue()
         {
            await _queue.StartQueue();
         }
 
-
-        public void Stop()
+        public void StopQueue()
         {
             _queue.StopQueue();
+        }
+
+        public void ClearQueue()
+        {
+            _queue.Clear();
+        }
+
+        public void EraseQueue()
+        {
+            _queue.Erase();
         }
 
 
@@ -42,11 +51,18 @@ namespace BL
             _queue.PausePlayer();
         }
 
+        public void StopPlayer()
+        {
+            _queue.StopPlayer();
+        }
+
 
         public void PlayPlayer()
         {
            _queue.PlayPlayer();
         }
+
+
 
 
 

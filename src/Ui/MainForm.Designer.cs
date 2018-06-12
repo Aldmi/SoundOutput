@@ -36,6 +36,8 @@
             this.btn_StopQueue = new System.Windows.Forms.Button();
             this.btn_EraseQueue = new System.Windows.Forms.Button();
             this.btn_Canselation = new System.Windows.Forms.Button();
+            this.btn_StopPlayer = new System.Windows.Forms.Button();
+            this.btn_ClearQueue = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.chList_LoadedFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -106,28 +108,53 @@
             // btn_EraseQueue
             // 
             this.btn_EraseQueue.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.btn_EraseQueue.Location = new System.Drawing.Point(834, 212);
+            this.btn_EraseQueue.Location = new System.Drawing.Point(834, 276);
             this.btn_EraseQueue.Name = "btn_EraseQueue";
             this.btn_EraseQueue.Size = new System.Drawing.Size(199, 53);
             this.btn_EraseQueue.TabIndex = 6;
             this.btn_EraseQueue.Text = "EraseQueue";
             this.btn_EraseQueue.UseVisualStyleBackColor = true;
+            this.btn_EraseQueue.Click += new System.EventHandler(this.btn_EraseQueue_Click);
             // 
             // btn_Canselation
             // 
             this.btn_Canselation.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.btn_Canselation.Location = new System.Drawing.Point(512, 212);
+            this.btn_Canselation.Location = new System.Drawing.Point(512, 276);
             this.btn_Canselation.Name = "btn_Canselation";
             this.btn_Canselation.Size = new System.Drawing.Size(199, 53);
             this.btn_Canselation.TabIndex = 7;
             this.btn_Canselation.Text = "Canselation";
             this.btn_Canselation.UseVisualStyleBackColor = true;
             // 
+            // btn_StopPlayer
+            // 
+            this.btn_StopPlayer.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btn_StopPlayer.Location = new System.Drawing.Point(512, 212);
+            this.btn_StopPlayer.Name = "btn_StopPlayer";
+            this.btn_StopPlayer.Size = new System.Drawing.Size(199, 53);
+            this.btn_StopPlayer.TabIndex = 8;
+            this.btn_StopPlayer.Text = "Stop Player";
+            this.btn_StopPlayer.UseVisualStyleBackColor = true;
+            this.btn_StopPlayer.Click += new System.EventHandler(this.btn_StopPlayer_Click);
+            // 
+            // btn_ClearQueue
+            // 
+            this.btn_ClearQueue.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btn_ClearQueue.Location = new System.Drawing.Point(834, 212);
+            this.btn_ClearQueue.Name = "btn_ClearQueue";
+            this.btn_ClearQueue.Size = new System.Drawing.Size(199, 53);
+            this.btn_ClearQueue.TabIndex = 9;
+            this.btn_ClearQueue.Text = "ClearQueue";
+            this.btn_ClearQueue.UseVisualStyleBackColor = true;
+            this.btn_ClearQueue.Click += new System.EventHandler(this.btn_ClearQueue_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1077, 489);
+            this.Controls.Add(this.btn_ClearQueue);
+            this.Controls.Add(this.btn_StopPlayer);
             this.Controls.Add(this.btn_Canselation);
             this.Controls.Add(this.btn_EraseQueue);
             this.Controls.Add(this.btn_StopQueue);
@@ -153,5 +180,7 @@
         private System.Windows.Forms.Button btn_StopQueue;
         private System.Windows.Forms.Button btn_EraseQueue;
         private System.Windows.Forms.Button btn_Canselation;
+        private System.Windows.Forms.Button btn_StopPlayer;
+        private System.Windows.Forms.Button btn_ClearQueue;
     }
 }
