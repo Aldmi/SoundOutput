@@ -97,7 +97,7 @@
             // btn_StopQueue
             // 
             this.btn_StopQueue.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.btn_StopQueue.Location = new System.Drawing.Point(834, 153);
+            this.btn_StopQueue.Location = new System.Drawing.Point(834, 152);
             this.btn_StopQueue.Name = "btn_StopQueue";
             this.btn_StopQueue.Size = new System.Drawing.Size(199, 53);
             this.btn_StopQueue.TabIndex = 5;

@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Media;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using BL;
 
@@ -17,7 +11,6 @@ namespace Ui
     public partial class MainForm : Form
     {
         private readonly SoundPlayerConsumer _soundPlayerConsumer;
-
         public List<FileInfo> LoadList { get; set; }
 
 
@@ -26,7 +19,6 @@ namespace Ui
         public MainForm(SoundPlayerConsumer soundPlayerConsumer)
         {
             _soundPlayerConsumer = soundPlayerConsumer;
- 
             InitializeComponent();
         }
 
@@ -35,9 +27,7 @@ namespace Ui
 
         protected override void OnLoad(EventArgs e)
         {
-            var taskSoundQueue = _soundPlayerConsumer.StartQueue();
-            Program.BackGroundTasks.Add(taskSoundQueue);
-
+            _soundPlayerConsumer.StartQueue();
             base.OnLoad(e);
         }
 
@@ -86,22 +76,21 @@ namespace Ui
 
 
         private bool _stopQueue;
-        private void btn_StopQueue_Click(object sender, EventArgs e)
+        private async void btn_StopQueue_Click(object sender, EventArgs e)
         {
             if (_stopQueue)
             {
-                var taskSoundQueue = _soundPlayerConsumer.StartQueue();
-                Program.BackGroundTasks.Add(taskSoundQueue);
+                _soundPlayerConsumer.StartQueue();
                 _stopQueue = false;
                 btn_StopQueue.Text = "Stop Queue";
             }
             else
             {
-                _soundPlayerConsumer.StopQueue();
+                await _soundPlayerConsumer.StopQueue();
                 _stopQueue = true;
                 btn_StopQueue.Text = "Start Queue";
             }
-    
+
         }
 
 

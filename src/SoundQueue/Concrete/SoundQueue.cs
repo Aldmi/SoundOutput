@@ -16,6 +16,7 @@ namespace SoundQueue.Concrete
     {
         #region field
 
+        private Task _currentTask;
         private readonly ISoundPlayer _player;
         private CancellationTokenSource _cts;
 
@@ -51,21 +52,36 @@ namespace SoundQueue.Concrete
 
         #region Methode
 
-        public async Task StartQueue()
+        public void StartQueue()
         {
-            IsWorking = true;
             _cts = new CancellationTokenSource();
-            await Task.Run(async () =>
+            _currentTask = Task.Run(async () => 
             {
                 await CycleInvoke();
+
+
             }, _cts.Token);
+            IsWorking = true;
         }
 
 
-        public void StopQueue()
+        public async Task StopQueue()
         {
             _cts?.Cancel();
-            IsWorking = false;
+            await _currentTask.ContinueWith(t =>
+                {
+                    IsWorking = false;
+                },
+                TaskContinuationOptions.OnlyOnCanceled);
+  
+            //try
+            //{
+            //    await _currentTask;
+            //}
+            //catch (OperationCanceledException)
+            //{
+            //    IsWorking = false;
+            //}
         }
 
 
@@ -118,7 +134,7 @@ namespace SoundQueue.Concrete
                 var ordered = Queue.OrderByDescending(elem => elem.ПриоритетГлавный).ThenByDescending(elem => elem.ПриоритетВторостепенный).ToList();  //ThenByDescending(s=>s.) упорядочевать дополнительно по времени добавления
 
                 //Очистили и заполнили заново очередь
-                Queue = new ConcurrentQueue<SoundMessage>(); 
+                Queue = new ConcurrentQueue<SoundMessage>();
                 if (currentFirstItem != null)
                 {
                     Queue.Enqueue(currentFirstItem);
@@ -156,7 +172,7 @@ namespace SoundQueue.Concrete
             //if (!IsWorking)
             //    return;
 
-            while (!_cts.IsCancellationRequested)  
+            while (!_cts.IsCancellationRequested)
             {
                 SoundMessage item;
                 if (Queue.TryDequeue(out item))
@@ -179,8 +195,8 @@ namespace SoundQueue.Concrete
                 SoundMessage item;
                 if (Queue.TryDequeue(out item))
                 {
-                  var res= await _player.PlayFile(item, CancellationToken.None);
-                }           
+                    var res = await _player.PlayFile(item, CancellationToken.None);
+                }
             }
         }
 

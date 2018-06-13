@@ -24,14 +24,14 @@ namespace BL
 
 
 
-        public async Task StartQueue()
+        public void StartQueue()
         {
-           await _queue.StartQueue();
+           _queue.StartQueue();
         }
 
-        public void StopQueue()
+        public async Task StopQueue()
         {
-            _queue.StopQueue();
+           await _queue.StopQueue();
         }
 
         public void ClearQueue()
