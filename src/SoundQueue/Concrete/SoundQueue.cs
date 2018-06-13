@@ -27,8 +27,8 @@ namespace SoundQueue.Concrete
 
         #region prop
 
-        private ConcurrentQueue<SoundMessage> Queue { get; set; } = new ConcurrentQueue<SoundMessage>();
-        public IEnumerable<SoundMessage> GetElements => Queue;
+        private ConcurrentQueue<SoundItem> Queue { get; set; } = new ConcurrentQueue<SoundItem>();
+        public IEnumerable<SoundItem> GetElements => Queue;
         public int Count => Queue.Count;
         public bool IsWorking { get; private set; }
 
@@ -119,7 +119,7 @@ namespace SoundQueue.Concrete
         /// <summary>
         /// Добавить элемент в очередь
         /// </summary>
-        public void AddItem(SoundMessage item)
+        public void AddItem(SoundItem item)
         {
             if (item == null)
                 return;
@@ -139,7 +139,7 @@ namespace SoundQueue.Concrete
 
                 //сохранили 1-ый элемент, и удаили его
                 var currentFirstItem = Queue.FirstOrDefault();
-                SoundMessage outItem;
+                SoundItem outItem;
                 Queue.TryDequeue(out outItem);  //???
 
                 //добавили новый элемент и отсортировали.
@@ -147,7 +147,7 @@ namespace SoundQueue.Concrete
                 var ordered = Queue.OrderByDescending(elem => elem.ПриоритетГлавный).ThenByDescending(elem => elem.ПриоритетВторостепенный).ToList();  //ThenByDescending(s=>s.) упорядочевать дополнительно по времени добавления
 
                 //Очистили и заполнили заново очередь
-                Queue = new ConcurrentQueue<SoundMessage>();
+                Queue = new ConcurrentQueue<SoundItem>();
                 if (currentFirstItem != null)
                 {
                     Queue.Enqueue(currentFirstItem);
@@ -165,7 +165,7 @@ namespace SoundQueue.Concrete
         public void Clear()
         {
             // Queue?.Clear();
-            Queue = new ConcurrentQueue<SoundMessage>();
+            Queue = new ConcurrentQueue<SoundItem>();
             //ElementsOnTemplatePlaying?.Clear();
             //CurrentTemplatePlaying = null;
             //CurrentSoundMessagePlaying = null;
@@ -184,7 +184,7 @@ namespace SoundQueue.Concrete
         {
             while (!_cts.IsCancellationRequested)
             {
-                SoundMessage item;
+                SoundItem item;
                 if (Queue.TryDequeue(out item))
                 {
                     Debug.WriteLine($"Start >>>>>>>>  {DateTime.Now:T}   {item.ИмяВоспроизводимогоФайла}");
@@ -202,7 +202,7 @@ namespace SoundQueue.Concrete
         {
             if (Count > 0)
             {
-                SoundMessage item;
+                SoundItem item;
                 if (Queue.TryDequeue(out item))
                 {
                     var res = await _player.PlayFile(item, CancellationToken.None);

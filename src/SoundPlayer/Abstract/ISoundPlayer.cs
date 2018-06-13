@@ -29,7 +29,7 @@ namespace SoundPlayer.Abstract
 
     public interface ISoundPlayer : IDisposable
     {
-        Task<bool> PlayFile(SoundMessage soundMessage, CancellationToken cts);
+        Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts);
         Task<bool> Play(CancellationToken cts);
 
         void Pause();

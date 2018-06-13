@@ -88,7 +88,7 @@ namespace SoundPlayer.Concrete
 
         #region Methode 
 
-        public async Task<bool> PlayFile(SoundMessage soundMessage, CancellationToken cts)
+        public async Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts)
         {
             if (_audioFileReader != null)
             {
@@ -98,7 +98,7 @@ namespace SoundPlayer.Concrete
 
             try
             {
-                var filePath = soundMessage.ПутьКФайлу;
+                var filePath = soundItem.ПутьКФайлу;
                 _audioFileReader = new AudioFileReader(filePath);
 
                 _waveOutDevice?.Stop();

@@ -16,7 +16,7 @@ namespace SoundQueue.Abstract
         void Clear();
         void Erase();
 
-        void AddItem(SoundMessage item);
+        void AddItem(SoundItem item);
         Task PlayTest(); //DEBUG;
     }
 }

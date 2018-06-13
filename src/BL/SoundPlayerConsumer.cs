@@ -68,20 +68,31 @@ namespace BL
 
         public void AddInQueue(IList<FileInfo> files)
         {
-            var soundMessages = files.Select(file => new SoundMessage
+            var soundItems = files.Select(file => new SoundItem
             {
                 ПутьКФайлу = file.FullName,
                 ИмяВоспроизводимогоФайла = file.Name,
-                ПриоритетГлавный = Priority.Hight,
-                ПриоритетВторостепенный = PriorityPrecise.Six,
-                ТипСообщения = ТипСообщения.Динамическое,
-                Язык = NotificationLanguage.Ru,
                 ВремяПаузы = 100
             }).ToList();
 
-            foreach (var soundMeaasge in soundMessages.Take(50))
+            var soundMessages= new List<SoundMessage>
             {
-                _queue.AddItem(soundMeaasge);
+                new SoundMessage
+                {
+                    RootId = 10,
+                    ParentId = 1,
+                    ПриоритетГлавный = Priority.Hight,
+                    ПриоритетВторостепенный = PriorityPrecise.Seven,
+                    Язык = NotificationLanguage.Ru,
+                    ТипСообщения = ТипСообщения.Динамическое,
+                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(0).Take(10)),
+                }
+            };
+
+
+            foreach (var soundItem in soundItems.Take(50))
+            {
+                _queue.AddItem(soundItem);
             }
         }
 
