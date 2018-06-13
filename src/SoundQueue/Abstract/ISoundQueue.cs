@@ -7,7 +7,7 @@ namespace SoundQueue.Abstract
     public interface ISoundQueue : IDisposable
     {
         void StartQueue();
-        Task StopQueue();
+        void StopQueue();
 
         void PausePlayer();
         void StopPlayer();

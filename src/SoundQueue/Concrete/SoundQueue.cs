@@ -55,25 +55,38 @@ namespace SoundQueue.Concrete
         public void StartQueue()
         {
             _cts = new CancellationTokenSource();
-            _currentTask = Task.Run(async () => 
+            _currentTask = Task.Run(async () =>               //ЗАПУСК ЗАДАЧИ
             {
                 await CycleInvoke();
-
-
             }, _cts.Token);
+
+            _currentTask.ContinueWith(t =>                   //ОБРАБОТКА ОТМЕНЫ ЗАДАЧИ
+            {
+                IsWorking = false;
+            },
+            TaskContinuationOptions.OnlyOnCanceled);
+
+            _currentTask.ContinueWith(t =>                  //ОБРАБОТКА Exception В ЗАДАЧИ
+            {
+                var ex = t.Exception;
+                //...    обработка ошибки
+                IsWorking = false;
+            },
+            TaskContinuationOptions.OnlyOnFaulted);
+
             IsWorking = true;
         }
 
 
-        public async Task StopQueue()
+        public void StopQueue()
         {
             _cts?.Cancel();
-            await _currentTask.ContinueWith(t =>
-                {
-                    IsWorking = false;
-                },
-                TaskContinuationOptions.OnlyOnCanceled);
-  
+            //await _currentTask.ContinueWith(t =>
+            //    {
+            //        IsWorking = false;
+            //    },
+            //    TaskContinuationOptions.OnlyOnCanceled);
+
             //try
             //{
             //    await _currentTask;
@@ -169,9 +182,6 @@ namespace SoundQueue.Concrete
 
         private async Task CycleInvoke()
         {
-            //if (!IsWorking)
-            //    return;
-
             while (!_cts.IsCancellationRequested)
             {
                 SoundMessage item;

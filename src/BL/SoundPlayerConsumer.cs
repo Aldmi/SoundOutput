@@ -29,9 +29,9 @@ namespace BL
            _queue.StartQueue();
         }
 
-        public async Task StopQueue()
+        public void StopQueue()
         {
-           await _queue.StopQueue();
+           _queue.StopQueue();
         }
 
         public void ClearQueue()

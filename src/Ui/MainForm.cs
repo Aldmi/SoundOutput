@@ -76,7 +76,7 @@ namespace Ui
 
 
         private bool _stopQueue;
-        private async void btn_StopQueue_Click(object sender, EventArgs e)
+        private void btn_StopQueue_Click(object sender, EventArgs e)
         {
             if (_stopQueue)
             {
@@ -86,7 +86,7 @@ namespace Ui
             }
             else
             {
-                await _soundPlayerConsumer.StopQueue();
+                _soundPlayerConsumer.StopQueue();
                 _stopQueue = true;
                 btn_StopQueue.Text = "Start Queue";
             }
