@@ -122,33 +122,35 @@ namespace SoundPlayer.Concrete
         }
 
 
+        private Queue<SoundItem4NAudio> _queue;
         public async Task<bool> PlayFile(Queue<SoundItem> queueSounds, CancellationToken cts)
         {
             SetVolume(0.9f);
-            var queue= new Queue<SoundItem4NAudio>(queueSounds.Select(item => new SoundItem4NAudio(item)));  //Созададим все проигрываемые объекты
-            while (queue.Any())
+            _queue = new Queue<SoundItem4NAudio>(queueSounds.Select(item=> new SoundItem4NAudio(item)));  //Создадим все проигрываемые объекты
+            while (_queue.Any())
             {
                 try
                 {
                     if (cts.IsCancellationRequested)
                     {
-                        foreach (var elem in queue)
-                        {
-                            elem.Dispose();
-                        }
                         return false;
                     }
 
-                    var item = queue.Dequeue();
+                    var item = _queue.Dequeue();
                     _audioFileReader = item.AudioFileReader;
                     _waveOutDevice = item.WaveOutDevice;
-                    await Play(cts);
+                    //await Play(cts).ContinueWith(t =>
+                    //{
+                    //   item.Dispose();
+                    //}, TaskContinuationOptions.NotOnCanceled);
+
+
+                    await Task.Delay(1);
                     item.Dispose();
                 }
                 catch (Exception e)
                 {
-                    
-                    throw;
+                                 
                 }
 
             }
@@ -340,10 +342,41 @@ namespace SoundPlayer.Concrete
 
         public void Dispose()
         {
-            _waveOutDevice?.Stop();  //TODO: уже уничтоженный объект пытаемся уничтожить, нужна проверка, что объект не уничтоженн
-            _waveOutDevice?.Dispose();
-            _audioFileReader?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        bool _disposed = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            try
+            {
+                if (disposing)
+                {
+                    _waveOutDevice?.Stop();
+                    _waveOutDevice?.Dispose();
+                    _audioFileReader?.Dispose();
+
+                    //if (_queue != null)
+                    //{
+                    //    foreach (var elem in _queue)
+                    //    {
+                    //        //elem.Dispose();
+                    //    }
+                    //}
+                }
+            }
+            catch (Exception e)
+            {
+              
+            }
+
+            _disposed = true;
+        }
+
 
         #endregion
     }
@@ -385,8 +418,29 @@ namespace SoundPlayer.Concrete
 
         public void Dispose()
         {
-            WaveOutDevice?.Dispose();
-            AudioFileReader?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        bool _disposed = false;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            try
+            {
+                if (disposing)
+                {
+                    WaveOutDevice?.Dispose();
+                    AudioFileReader?.Dispose();
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+            _disposed = true;
         }
 
         #endregion
