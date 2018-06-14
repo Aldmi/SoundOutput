@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,6 +63,16 @@ namespace SoundPlayer.Concrete
 
 
 
+        #region RxEvent
+
+        public Subject<string> StatusStringChangeRx { get; } = new Subject<string>(); //Изменение StatusString
+        public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>(); //Изменение IsConnect
+
+        #endregion
+
+
+
+
 
         #region ctor
 
@@ -75,19 +87,11 @@ namespace SoundPlayer.Concrete
 
 
 
-        #region RxEvent
-
-        public Subject<string> StatusStringChangeRx { get; } = new Subject<string>(); //Изменение StatusString
-        public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>(); //Изменение IsConnect
-
-        #endregion
-
-
-
-
-
         #region Methode 
 
+        /// <summary>
+        /// Проиграть 1 звуковой элемент (1 файл).
+        /// </summary>
         public async Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts)
         {
             if (_audioFileReader != null)
@@ -117,6 +121,39 @@ namespace SoundPlayer.Concrete
             return false;
         }
 
+
+        public async Task<bool> PlayFile(Queue<SoundItem> queueSounds, CancellationToken cts)
+        {
+            SetVolume(0.9f);
+            var queue= new Queue<SoundItem4NAudio>(queueSounds.Select(item => new SoundItem4NAudio(item)));  //Созададим все проигрываемые объекты
+            while (queue.Any())
+            {
+                try
+                {
+                    if (cts.IsCancellationRequested)
+                    {
+                        foreach (var elem in queue)
+                        {
+                            elem.Dispose();
+                        }
+                        return false;
+                    }
+
+                    var item = queue.Dequeue();
+                    _audioFileReader = item.AudioFileReader;
+                    _waveOutDevice = item.WaveOutDevice;
+                    await Play(cts);
+                    item.Dispose();
+                }
+                catch (Exception e)
+                {
+                    
+                    throw;
+                }
+
+            }
+            return true;
+        }
 
 
         /// <summary>
@@ -191,7 +228,7 @@ namespace SoundPlayer.Concrete
 
             }, cts.Token);
 
-            return  _tcs.Task;
+            return _tcs.Task;
         }
 
 
@@ -303,11 +340,53 @@ namespace SoundPlayer.Concrete
 
         public void Dispose()
         {
-            if (_waveOutDevice != null)
-            {
-                _waveOutDevice.Stop();
-                _waveOutDevice.Dispose();
-            }
+            _waveOutDevice?.Stop();  //TODO: уже уничтоженный объект пытаемся уничтожить, нужна проверка, что объект не уничтоженн
+            _waveOutDevice?.Dispose();
+            _audioFileReader?.Dispose();
+        }
+
+        #endregion
+    }
+
+
+
+
+    public class SoundItem4NAudio : IDisposable
+    {
+        #region field
+
+        public readonly SoundItem SoundItem;
+        public readonly IWavePlayer WaveOutDevice;
+        public readonly AudioFileReader AudioFileReader;
+
+        #endregion
+
+
+
+
+
+        #region ctor
+
+        public SoundItem4NAudio(SoundItem soundItem)
+        {
+            SoundItem = soundItem;
+            var filePath = soundItem.ПутьКФайлу;
+            AudioFileReader = new AudioFileReader(filePath);
+            WaveOutDevice = new WaveOut();
+            WaveOutDevice.Init(AudioFileReader);
+        }
+
+        #endregion
+
+
+
+
+        #region Dispose
+
+        public void Dispose()
+        {
+            WaveOutDevice?.Dispose();
+            AudioFileReader?.Dispose();
         }
 
         #endregion

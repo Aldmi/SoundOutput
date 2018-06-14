@@ -38,6 +38,7 @@
             this.btn_Canselation = new System.Windows.Forms.Button();
             this.btn_StopPlayer = new System.Windows.Forms.Button();
             this.btn_ClearQueue = new System.Windows.Forms.Button();
+            this.lw_QueueEvent = new System.Windows.Forms.ListView();
             ((System.ComponentModel.ISupportInitialize)(this.chList_LoadedFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -148,11 +149,20 @@
             this.btn_ClearQueue.UseVisualStyleBackColor = true;
             this.btn_ClearQueue.Click += new System.EventHandler(this.btn_ClearQueue_Click);
             // 
+            // lw_QueueEvent
+            // 
+            this.lw_QueueEvent.Location = new System.Drawing.Point(512, 350);
+            this.lw_QueueEvent.Name = "lw_QueueEvent";
+            this.lw_QueueEvent.Size = new System.Drawing.Size(521, 312);
+            this.lw_QueueEvent.TabIndex = 10;
+            this.lw_QueueEvent.UseCompatibleStateImageBehavior = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1077, 489);
+            this.ClientSize = new System.Drawing.Size(1077, 674);
+            this.Controls.Add(this.lw_QueueEvent);
             this.Controls.Add(this.btn_ClearQueue);
             this.Controls.Add(this.btn_StopPlayer);
             this.Controls.Add(this.btn_Canselation);
@@ -182,5 +192,6 @@
         private System.Windows.Forms.Button btn_Canselation;
         private System.Windows.Forms.Button btn_StopPlayer;
         private System.Windows.Forms.Button btn_ClearQueue;
+        private System.Windows.Forms.ListView lw_QueueEvent;
     }
 }

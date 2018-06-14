@@ -3,24 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using SoundPlayer.Abstract;
-using SoundPlayer.Concrete;
+using System.Reactive.Subjects;
 using SoundPlayer.Model;
 using SoundQueue.Abstract;
+using SoundQueue.RxModel;
 
 namespace BL
 {
-    public class SoundPlayerConsumer : IDisposable
+    public class SoundQueueConsumer : IDisposable
     {
         private readonly ISoundQueue _queue;
+        public Subject<StatusPlaying> QueueChangeRx => _queue.QueueChangeRx;
+        public Subject<SoundMessageChangeRx> SoundMessageChangeRx => _queue.SoundMessageChangeRx;
 
 
 
-        public SoundPlayerConsumer(ISoundQueue queue)
+
+        public SoundQueueConsumer(ISoundQueue queue)
         {
             _queue = queue;
         }
+
 
 
 
@@ -72,13 +75,14 @@ namespace BL
             {
                 ПутьКФайлу = file.FullName,
                 ИмяВоспроизводимогоФайла = file.Name,
-                ВремяПаузы = 100
+                ВремяПаузы = 150
             }).ToList();
 
             var soundMessages= new List<SoundMessage>
             {
                 new SoundMessage
                 {
+                    Name = "Шаблон 1",
                     RootId = 10,
                     ParentId = 1,
                     ПриоритетГлавный = Priority.Hight,
@@ -86,13 +90,34 @@ namespace BL
                     Язык = NotificationLanguage.Ru,
                     ТипСообщения = ТипСообщения.Динамическое,
                     ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(0).Take(10)),
+                },
+                new SoundMessage
+                {
+                    Name = "Шаблон 2",
+                    RootId = 11,
+                    ParentId = 1,
+                    ПриоритетГлавный = Priority.Hight,
+                    ПриоритетВторостепенный = PriorityPrecise.Seven,
+                    Язык = NotificationLanguage.Ru,
+                    ТипСообщения = ТипСообщения.Динамическое,
+                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(10).Take(10)),
+                },
+                new SoundMessage
+                {
+                    Name = "Шаблон 3",
+                    RootId = 12,
+                    ParentId = 1,
+                    ПриоритетГлавный = Priority.Hight,
+                    ПриоритетВторостепенный = PriorityPrecise.Seven,
+                    Язык = NotificationLanguage.Ru,
+                    ТипСообщения = ТипСообщения.Динамическое,
+                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(20).Take(10)),
                 }
             };
 
-
-            foreach (var soundItem in soundItems.Take(50))
+            foreach (var soundMes in soundMessages)
             {
-                _queue.AddItem(soundItem);
+               _queue.AddItem(soundMes);
             }
         }
 

@@ -3,11 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using SoundPlayer.Abstract;
 using SoundPlayer.Model;
 using SoundQueue.Abstract;
+using SoundQueue.RxModel;
 
 
 namespace SoundQueue.Concrete
@@ -27,10 +29,24 @@ namespace SoundQueue.Concrete
 
         #region prop
 
-        private ConcurrentQueue<SoundItem> Queue { get; set; } = new ConcurrentQueue<SoundItem>();
-        public IEnumerable<SoundItem> GetElements => Queue;
+        private ConcurrentQueue<SoundMessage> Queue { get; set; } = new ConcurrentQueue<SoundMessage>();
+        public IEnumerable<SoundMessage> GetElements => Queue;
         public int Count => Queue.Count;
-        public bool IsWorking { get; private set; }
+        public bool IsWorking { get; private set; }                     //Работа очереди
+
+        public SoundMessage PlayingMessage { get; private set; }        //текущий проигрываемый файл
+        public SoundMessage PlayedMessage { get; private set; }         //предыдущий проигранный файл
+
+        #endregion
+
+
+
+
+
+        #region RxEvent
+
+        public Subject<StatusPlaying> QueueChangeRx { get; } = new Subject<StatusPlaying>();                       //Событие определния начала/конца проигрывания ОЧЕРЕДИ
+        public Subject<SoundMessageChangeRx> SoundMessageChangeRx { get; } = new Subject<SoundMessageChangeRx>();  //Событие определения начала/конца проигрывания ШАБЛОНА (статики или динамики, подписшик сам отфильтрует нужное срабатывание)
 
 
         #endregion
@@ -50,6 +66,7 @@ namespace SoundQueue.Concrete
 
 
 
+
         #region Methode
 
         public void StartQueue()
@@ -57,7 +74,8 @@ namespace SoundQueue.Concrete
             _cts = new CancellationTokenSource();
             _currentTask = Task.Run(async () =>               //ЗАПУСК ЗАДАЧИ
             {
-                await CycleInvoke();
+                //await CycleInvoke();
+                await CycleInvokeUsingInternalSoundPlayerQueue();
             }, _cts.Token);
 
             _currentTask.ContinueWith(t =>                   //ОБРАБОТКА ОТМЕНЫ ЗАДАЧИ
@@ -119,7 +137,7 @@ namespace SoundQueue.Concrete
         /// <summary>
         /// Добавить элемент в очередь
         /// </summary>
-        public void AddItem(SoundItem item)
+        public void AddItem(SoundMessage item)
         {
             if (item == null)
                 return;
@@ -139,7 +157,7 @@ namespace SoundQueue.Concrete
 
                 //сохранили 1-ый элемент, и удаили его
                 var currentFirstItem = Queue.FirstOrDefault();
-                SoundItem outItem;
+                SoundMessage outItem;
                 Queue.TryDequeue(out outItem);  //???
 
                 //добавили новый элемент и отсортировали.
@@ -147,7 +165,7 @@ namespace SoundQueue.Concrete
                 var ordered = Queue.OrderByDescending(elem => elem.ПриоритетГлавный).ThenByDescending(elem => elem.ПриоритетВторостепенный).ToList();  //ThenByDescending(s=>s.) упорядочевать дополнительно по времени добавления
 
                 //Очистили и заполнили заново очередь
-                Queue = new ConcurrentQueue<SoundItem>();
+                Queue = new ConcurrentQueue<SoundMessage>();
                 if (currentFirstItem != null)
                 {
                     Queue.Enqueue(currentFirstItem);
@@ -165,7 +183,7 @@ namespace SoundQueue.Concrete
         public void Clear()
         {
             // Queue?.Clear();
-            Queue = new ConcurrentQueue<SoundItem>();
+            Queue = new ConcurrentQueue<SoundMessage>();
             //ElementsOnTemplatePlaying?.Clear();
             //CurrentTemplatePlaying = null;
             //CurrentSoundMessagePlaying = null;
@@ -184,13 +202,57 @@ namespace SoundQueue.Concrete
         {
             while (!_cts.IsCancellationRequested)
             {
-                SoundItem item;
-                if (Queue.TryDequeue(out item))
+                SoundMessage message;
+                if (Queue.TryDequeue(out message))
                 {
-                    Debug.WriteLine($"Start >>>>>>>>  {DateTime.Now:T}   {item.ИмяВоспроизводимогоФайла}");
-                    var res = await _player.PlayFile(item, _cts.Token);
-                    Debug.WriteLine($"End <<<<<<<<   {DateTime.Now:T}    {item.ИмяВоспроизводимогоФайла}");
-                    await Task.Delay(item.ВремяПаузы ?? 0, _cts.Token);
+                    PlayingMessage = message;
+                    SoundMessageChangeRx.OnNext(new SoundMessageChangeRx
+                    {
+                        StatusPlaying = StatusPlaying.Start,
+                        SoundMessage = PlayingMessage
+                    });
+                    while (PlayingMessage.ОчередьШаблона.Any())
+                    {
+                        var soundItem = PlayingMessage.ОчередьШаблона.Dequeue();
+                        Debug.WriteLine($"Start >>>>>>>>  {DateTime.Now:T}   {soundItem.ИмяВоспроизводимогоФайла}");
+                        var res = await _player.PlayFile(soundItem, _cts.Token);
+                        Debug.WriteLine($"End <<<<<<<<   {DateTime.Now:T}    {soundItem.ИмяВоспроизводимогоФайла}");
+                        await Task.Delay(soundItem.ВремяПаузы ?? 0, _cts.Token);
+                    }
+                    PlayedMessage = PlayingMessage;
+                    PlayingMessage = null;
+                    SoundMessageChangeRx.OnNext(new SoundMessageChangeRx
+                    {
+                        StatusPlaying = StatusPlaying.Stop,
+                        SoundMessage = PlayedMessage
+                    });
+                }
+            }
+        }
+
+
+
+        private async Task CycleInvokeUsingInternalSoundPlayerQueue()
+        {
+            while (!_cts.IsCancellationRequested)
+            {
+                SoundMessage message;
+                if (Queue.TryDequeue(out message))
+                {
+                    PlayingMessage = message;
+                    SoundMessageChangeRx.OnNext(new SoundMessageChangeRx
+                    {
+                        StatusPlaying = StatusPlaying.Start,
+                        SoundMessage = PlayingMessage
+                    });
+                    var res = await _player.PlayFile(PlayingMessage.ОчередьШаблона, _cts.Token);
+                    PlayedMessage = PlayingMessage;
+                    PlayingMessage = null;
+                    SoundMessageChangeRx.OnNext(new SoundMessageChangeRx
+                    {
+                        StatusPlaying = StatusPlaying.Stop,
+                        SoundMessage = PlayedMessage
+                    });
                 }
             }
         }
@@ -198,16 +260,18 @@ namespace SoundQueue.Concrete
 
 
 
+
+
         public async Task PlayTest() //DEBUG
         {
-            if (Count > 0)
-            {
-                SoundItem item;
-                if (Queue.TryDequeue(out item))
-                {
-                    var res = await _player.PlayFile(item, CancellationToken.None);
-                }
-            }
+            //if (Count > 0)
+            //{
+            //    SoundItem item;
+            //    if (Queue.TryDequeue(out item))
+            //    {
+            //        var res = await _player.PlayFile(item, CancellationToken.None);
+            //    }
+            //}
         }
 
 

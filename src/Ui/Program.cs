@@ -28,7 +28,7 @@ namespace Ui
 
             //TODO:передавать через DI
             var player = new NAudioSoundPlayer(null);
-            var spc = new SoundPlayerConsumer(new SoundQueue.Concrete.SoundQueue(player));
+            var spc = new SoundQueueConsumer(new SoundQueue.Concrete.SoundQueue(player));
             Application.Run(new MainForm(spc));
 
 

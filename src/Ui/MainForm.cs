@@ -4,39 +4,68 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using BL;
+using SoundQueue.RxModel;
 
 
 namespace Ui
 {
     public partial class MainForm : Form
     {
-        private readonly SoundPlayerConsumer _soundPlayerConsumer;
+        private readonly SoundQueueConsumer _soundQueueConsumer;
         public List<FileInfo> LoadList { get; set; }
 
+        public IDisposable DispouseTemplateChangeRx { get; set; }
 
 
 
-        public MainForm(SoundPlayerConsumer soundPlayerConsumer)
+
+
+        public MainForm(SoundQueueConsumer soundQueueConsumer)
         {
-            _soundPlayerConsumer = soundPlayerConsumer;
+            _soundQueueConsumer = soundQueueConsumer;
+            DispouseTemplateChangeRx= _soundQueueConsumer.SoundMessageChangeRx.Subscribe(SoundMessageChangeRxEventHandler);
+
             InitializeComponent();
         }
 
 
 
 
+
+        #region EventHandler
+
         protected override void OnLoad(EventArgs e)
         {
-            _soundPlayerConsumer.StartQueue();
+            _soundQueueConsumer.StartQueue();
             base.OnLoad(e);
         }
 
 
         protected override void OnClosed(EventArgs e)
         {
-            _soundPlayerConsumer.Dispose(); //При закрытии формы вручную уничтожить потребителя очереди, а он уничтожить очередь с плеером
+            _soundQueueConsumer.Dispose(); //При закрытии формы вручную уничтожить потребителя очереди, а он уничтожить очередь с плеером
+            DispouseTemplateChangeRx.Dispose();
             base.OnClosed(e);
         }
+
+
+        private void SoundMessageChangeRxEventHandler(SoundMessageChangeRx soundMessageChangeRx)
+        {
+            try
+            {
+                this.InvokeIfNeeded(() =>
+                {
+                    lw_QueueEvent.Items.Add(soundMessageChangeRx.SoundMessage.Name + "  " + soundMessageChangeRx.StatusPlaying + "\n");
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        #endregion
+
 
 
         private void btn_load_Click(object sender, EventArgs e)
@@ -47,7 +76,6 @@ namespace Ui
                 MessageBox.Show($@"Директория не найденна: {path}");
                 return;
             }
-
 
             LoadList = new DirectoryInfo(path)
                 .GetFiles("*.wav", SearchOption.AllDirectories)
@@ -64,14 +92,14 @@ namespace Ui
                 MessageBox.Show(@"Список файлов пуст");
             }
 
-            _soundPlayerConsumer.AddInQueue(LoadList);
+            _soundQueueConsumer.AddInQueue(LoadList);
 
         }
 
 
         private void btn_PlayAll_Click(object sender, EventArgs e)
         {
-          _soundPlayerConsumer.PlayLIstFiles();
+          _soundQueueConsumer.PlayLIstFiles();
         }
 
 
@@ -80,13 +108,13 @@ namespace Ui
         {
             if (_stopQueue)
             {
-                _soundPlayerConsumer.StartQueue();
+                _soundQueueConsumer.StartQueue();
                 _stopQueue = false;
                 btn_StopQueue.Text = "Stop Queue";
             }
             else
             {
-                _soundPlayerConsumer.StopQueue();
+                _soundQueueConsumer.StopQueue();
                 _stopQueue = true;
                 btn_StopQueue.Text = "Start Queue";
             }
@@ -101,13 +129,13 @@ namespace Ui
         {
             if (_pausePlayer)
             {
-                _soundPlayerConsumer.PlayPlayer();
+                _soundQueueConsumer.PlayPlayer();
                 _pausePlayer = false;
                 btnPause.Text = "pause player";
             }
             else
             {
-                _soundPlayerConsumer.PausePlayer();
+                _soundQueueConsumer.PausePlayer();
                 _pausePlayer = true;
                 btnPause.Text = "play player";
             }
@@ -119,13 +147,13 @@ namespace Ui
         {
             if (_stopPlayer)
             {
-                _soundPlayerConsumer.PlayPlayer();
+                _soundQueueConsumer.PlayPlayer();
                 _stopPlayer = false;
                 btn_StopPlayer.Text = "stop player";
             }
             else
             {
-                _soundPlayerConsumer.StopPlayer();
+                _soundQueueConsumer.StopPlayer();
                 _stopPlayer = true;
                 btn_StopPlayer.Text = "play player";
             }
@@ -135,12 +163,12 @@ namespace Ui
 
         private void btn_ClearQueue_Click(object sender, EventArgs e)
         {
-            _soundPlayerConsumer.ClearQueue();
+            _soundQueueConsumer.ClearQueue();
         }
 
         private void btn_EraseQueue_Click(object sender, EventArgs e)
         {
-            _soundPlayerConsumer.EraseQueue();
+            _soundQueueConsumer.EraseQueue();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ namespace SoundPlayer.Abstract
     public interface ISoundPlayer : IDisposable
     {
         Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts);
+        Task<bool> PlayFile(Queue<SoundItem> queueSounds, CancellationToken cts);
         Task<bool> Play(CancellationToken cts);
 
         void Pause();
