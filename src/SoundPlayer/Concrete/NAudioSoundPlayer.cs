@@ -122,38 +122,35 @@ namespace SoundPlayer.Concrete
         }
 
 
-        private Queue<SoundItem4NAudio> _queue;
-        public async Task<bool> PlayFile(Queue<SoundItem> queueSounds, CancellationToken cts)
+
+        /// <summary>
+        /// Проиграть Коллекцию файлов, используя встроенную очередь звуковых элементов
+        /// </summary>
+        private IEnumerable<SoundItem4NAudio> _queueInternal;
+        public async Task<bool> PlayFile(IEnumerable<SoundItem> queueSounds, CancellationToken cts)
         {
             SetVolume(0.9f);
-            _queue = new Queue<SoundItem4NAudio>(queueSounds.Select(item=> new SoundItem4NAudio(item)));  //Создадим все проигрываемые объекты
-            while (_queue.Any())
+
+            //Создадим все проигрываемые объекты---------------------
+            _queueInternal = queueSounds.Select(item=> new SoundItem4NAudio(item)).ToList();
+
+            //Проиграем --------------------------------------------
+            try
             {
-                try
+                foreach (var item in _queueInternal)
                 {
-                    if (cts.IsCancellationRequested)
-                    {
-                        return false;
-                    }
-
-                    var item = _queue.Dequeue();
-                    _audioFileReader = item.AudioFileReader;
-                    _waveOutDevice = item.WaveOutDevice;
-                    //await Play(cts).ContinueWith(t =>
-                    //{
-                    //   item.Dispose();
-                    //}, TaskContinuationOptions.NotOnCanceled);
-
-
-                    await Task.Delay(1);
-                    item.Dispose();
+                  await PlayOther(item, cts);          //При сработке cts, генерируется исключение и мы попадаем в блок finally.
                 }
-                catch (Exception e)
-                {
-                                 
-                }
-
             }
+            finally
+            {
+                //Уничтожим все проигрываемые объекты -------------
+                foreach (var elem in _queueInternal)
+                {
+                    elem.Dispose();
+                }
+            }
+
             return true;
         }
 
@@ -175,7 +172,7 @@ namespace SoundPlayer.Concrete
                 if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
                     _waveOutDevice.PlaybackState == PlaybackState.Stopped)
                 {
-                    await PlayWithControl(CancellationToken.None);
+                    var res= await PlayWithControl(CancellationToken.None);
                     return true;
                 }
                 return false;
@@ -232,6 +229,60 @@ namespace SoundPlayer.Concrete
 
             return _tcs.Task;
         }
+
+
+        /// <summary>
+        /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        /// </summary>
+        private TaskCompletionSource<PlaybackState> _tcs1;
+        private Task<PlaybackState> PlayOther(SoundItem4NAudio soundItem4N, CancellationToken ct)
+        {
+            var waveOutDevice = soundItem4N.WaveOutDevice;
+            var cts = new CancellationTokenSource();
+            try
+            {
+              
+                if (waveOutDevice.PlaybackState == PlaybackState.Paused ||
+                    waveOutDevice.PlaybackState == PlaybackState.Stopped)
+                {
+                    //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
+                    waveOutDevice.Play();
+                }        
+            }
+            catch (Exception ex)
+            {
+                cts.Cancel();
+            }
+
+            _tcs1 = new TaskCompletionSource<PlaybackState>();
+            Task.Run(() =>
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    if (ct.IsCancellationRequested)
+                    {
+                        cts.Cancel();
+                        _tcs1.TrySetCanceled();
+                    }
+
+                    switch (waveOutDevice.PlaybackState)
+                    {
+                        case PlaybackState.Stopped:
+                            _tcs1.TrySetResult(waveOutDevice.PlaybackState);
+                            cts.Cancel();
+                            break;
+                    }
+                }
+
+            }, cts.Token);
+
+            return _tcs1.Task;
+        }
+
+
+
+
+
 
 
         public void Pause()
@@ -359,14 +410,6 @@ namespace SoundPlayer.Concrete
                     _waveOutDevice?.Stop();
                     _waveOutDevice?.Dispose();
                     _audioFileReader?.Dispose();
-
-                    //if (_queue != null)
-                    //{
-                    //    foreach (var elem in _queue)
-                    //    {
-                    //        //elem.Dispose();
-                    //    }
-                    //}
                 }
             }
             catch (Exception e)

@@ -99,20 +99,6 @@ namespace SoundQueue.Concrete
         public void StopQueue()
         {
             _cts?.Cancel();
-            //await _currentTask.ContinueWith(t =>
-            //    {
-            //        IsWorking = false;
-            //    },
-            //    TaskContinuationOptions.OnlyOnCanceled);
-
-            //try
-            //{
-            //    await _currentTask;
-            //}
-            //catch (OperationCanceledException)
-            //{
-            //    IsWorking = false;
-            //}
         }
 
 

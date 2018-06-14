@@ -31,7 +31,7 @@ namespace SoundPlayer.Abstract
     public interface ISoundPlayer : IDisposable
     {
         Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts);
-        Task<bool> PlayFile(Queue<SoundItem> queueSounds, CancellationToken cts);
+        Task<bool> PlayFile(IEnumerable<SoundItem> queueSounds, CancellationToken cts);
         Task<bool> Play(CancellationToken cts);
 
         void Pause();
