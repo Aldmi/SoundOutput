@@ -30,7 +30,6 @@
         {
             this.btn_load = new System.Windows.Forms.Button();
             this.chList_LoadedFiles = new DevExpress.XtraEditors.CheckedListBoxControl();
-            this.btn_PlayAll = new System.Windows.Forms.Button();
             this.btn_AddInQueue = new System.Windows.Forms.Button();
             this.btnPause = new System.Windows.Forms.Button();
             this.btn_StopQueue = new System.Windows.Forms.Button();
@@ -39,6 +38,7 @@
             this.btn_StopPlayer = new System.Windows.Forms.Button();
             this.btn_ClearQueue = new System.Windows.Forms.Button();
             this.lw_QueueEvent = new System.Windows.Forms.ListView();
+            this.btn_Filter = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.chList_LoadedFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -61,17 +61,6 @@
             this.chList_LoadedFiles.Name = "chList_LoadedFiles";
             this.chList_LoadedFiles.Size = new System.Drawing.Size(481, 375);
             this.chList_LoadedFiles.TabIndex = 1;
-            // 
-            // btn_PlayAll
-            // 
-            this.btn_PlayAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.btn_PlayAll.Location = new System.Drawing.Point(834, 27);
-            this.btn_PlayAll.Name = "btn_PlayAll";
-            this.btn_PlayAll.Size = new System.Drawing.Size(199, 53);
-            this.btn_PlayAll.TabIndex = 2;
-            this.btn_PlayAll.Text = "Play all";
-            this.btn_PlayAll.UseVisualStyleBackColor = true;
-            this.btn_PlayAll.Click += new System.EventHandler(this.btn_PlayAll_Click);
             // 
             // btn_AddInQueue
             // 
@@ -151,17 +140,29 @@
             // 
             // lw_QueueEvent
             // 
-            this.lw_QueueEvent.Location = new System.Drawing.Point(512, 350);
+            this.lw_QueueEvent.Location = new System.Drawing.Point(512, 428);
             this.lw_QueueEvent.Name = "lw_QueueEvent";
-            this.lw_QueueEvent.Size = new System.Drawing.Size(521, 312);
+            this.lw_QueueEvent.Size = new System.Drawing.Size(521, 234);
             this.lw_QueueEvent.TabIndex = 10;
             this.lw_QueueEvent.UseCompatibleStateImageBehavior = false;
+            // 
+            // btn_Filter
+            // 
+            this.btn_Filter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btn_Filter.Location = new System.Drawing.Point(834, 335);
+            this.btn_Filter.Name = "btn_Filter";
+            this.btn_Filter.Size = new System.Drawing.Size(199, 53);
+            this.btn_Filter.TabIndex = 11;
+            this.btn_Filter.Text = "AplyFilterToQueue";
+            this.btn_Filter.UseVisualStyleBackColor = true;
+            this.btn_Filter.Click += new System.EventHandler(this.btn_Filter_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1077, 674);
+            this.Controls.Add(this.btn_Filter);
             this.Controls.Add(this.lw_QueueEvent);
             this.Controls.Add(this.btn_ClearQueue);
             this.Controls.Add(this.btn_StopPlayer);
@@ -170,7 +171,6 @@
             this.Controls.Add(this.btn_StopQueue);
             this.Controls.Add(this.btnPause);
             this.Controls.Add(this.btn_AddInQueue);
-            this.Controls.Add(this.btn_PlayAll);
             this.Controls.Add(this.chList_LoadedFiles);
             this.Controls.Add(this.btn_load);
             this.Name = "MainForm";
@@ -184,7 +184,6 @@
 
         private System.Windows.Forms.Button btn_load;
         private DevExpress.XtraEditors.CheckedListBoxControl chList_LoadedFiles;
-        private System.Windows.Forms.Button btn_PlayAll;
         private System.Windows.Forms.Button btn_AddInQueue;
         private System.Windows.Forms.Button btnPause;
         private System.Windows.Forms.Button btn_StopQueue;
@@ -193,5 +192,6 @@
         private System.Windows.Forms.Button btn_StopPlayer;
         private System.Windows.Forms.Button btn_ClearQueue;
         private System.Windows.Forms.ListView lw_QueueEvent;
+        private System.Windows.Forms.Button btn_Filter;
     }
 }

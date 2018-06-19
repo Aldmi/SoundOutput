@@ -35,9 +35,12 @@ namespace SoundQueue.Concrete
         public IEnumerable<SoundMessage> GetElements => Queue;
         public int Count => Queue.Count;
         public bool IsWorking { get; private set; }                     //Работа очереди
-
         public SoundMessage PlayingMessage { get; private set; }        //текущий проигрываемый файл
         public SoundMessage PlayedMessage { get; private set; }         //предыдущий проигранный файл
+
+        public IDisposable DispouseSoundMessageChangeRx { get; set; }
+
+        public SoundPlayerStatus GetPlayerStatus => _player.GetPlayerStatus();
 
         #endregion
 
@@ -49,7 +52,6 @@ namespace SoundQueue.Concrete
 
         public Subject<StatusPlaying> QueueChangeRx { get; } = new Subject<StatusPlaying>();                       //Событие определния начала/конца проигрывания ОЧЕРЕДИ
         public Subject<SoundMessageChangeRx> SoundMessageChangeRx { get; } = new Subject<SoundMessageChangeRx>();  //Событие определения начала/конца проигрывания ШАБЛОНА (статики или динамики, подписшик сам отфильтрует нужное срабатывание)
-
 
         #endregion
 
@@ -72,6 +74,8 @@ namespace SoundQueue.Concrete
 
         public void StartQueue()
         {
+            DispouseSoundMessageChangeRx = SoundMessageChangeRx.Subscribe(DefinitionStartStopQueueRxEventHandler);
+
             _cts = new CancellationTokenSource();
             _currentTask = Task.Run(async () =>               //ЗАПУСК ЗАДАЧИ
             {
@@ -82,6 +86,7 @@ namespace SoundQueue.Concrete
             _currentTask.ContinueWith(t =>                   //ОБРАБОТКА ОТМЕНЫ ЗАДАЧИ
             {
                 IsWorking = false;
+                DispouseSoundMessageChangeRx.Dispose();
             },
             TaskContinuationOptions.OnlyOnCanceled);
 
@@ -90,6 +95,7 @@ namespace SoundQueue.Concrete
                 var ex = t.Exception;
                 //...    обработка ошибки
                 IsWorking = false;
+                DispouseSoundMessageChangeRx.Dispose();
             },
             TaskContinuationOptions.OnlyOnFaulted);
 
@@ -111,20 +117,23 @@ namespace SoundQueue.Concrete
 
 
 
-        public void PausePlayer()
+        public bool PausePlayer()
         {
             _player.Pause();
+            return GetPlayerStatus == SoundPlayerStatus.Paused;
         }
 
 
-        public void StopPlayer()
+        public bool StopPlayer()
         {
             _player.Stop();
+            return GetPlayerStatus == SoundPlayerStatus.Stop;
         }
 
-        public void PlayPlayer()
+        public bool PlayPlayer()
         {
             _player.Play();
+            return GetPlayerStatus == SoundPlayerStatus.Playing;
         }
 
 
@@ -232,6 +241,7 @@ namespace SoundQueue.Concrete
             while (!_cts.IsCancellationRequested)
             {
                 SoundMessage message;
+
                 if (Queue.TryDequeue(out message))
                 {
                     PlayingMessage = message;
@@ -240,6 +250,7 @@ namespace SoundQueue.Concrete
                         StatusPlaying = StatusPlaying.Start,
                         SoundMessage = PlayingMessage
                     });
+
                     var res = await _player.PlayFile(PlayingMessage.ОчередьШаблона, _cts.Token);
                     PlayedMessage = PlayingMessage;
                     PlayingMessage = null;
@@ -254,6 +265,40 @@ namespace SoundQueue.Concrete
 
         #endregion
 
+
+
+
+        #region RxEventHandler
+
+        /// <summary>
+        /// Вычисляет событие начала/конца проигрывания очереди
+        /// </summary>
+        private bool _isEmptyQueueOld = true;//наличие элемента в очереди на ПРЕДЫДУЩЕМ шаге
+        private void DefinitionStartStopQueueRxEventHandler(SoundMessageChangeRx soundMessageChangeRx)
+        {
+
+            switch (soundMessageChangeRx.StatusPlaying)
+            {
+                case StatusPlaying.Start:
+                    if (_isEmptyQueueOld)
+                    {
+                        QueueChangeRx.OnNext(StatusPlaying.Start);
+                    }
+                    break;
+
+                case StatusPlaying.Stop:
+                    _isEmptyQueueOld = Queue.IsEmpty;
+                    if (_isEmptyQueueOld)
+                    {
+                        QueueChangeRx.OnNext(StatusPlaying.Stop);
+                    }
+                    break;
+            }
+
+
+        }
+
+        #endregion
 
 
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using BL;
+using SoundQueue.Abstract;
 using SoundQueue.RxModel;
 
 
@@ -15,7 +16,7 @@ namespace Ui
         public List<FileInfo> LoadList { get; set; }
 
         public IDisposable DispouseTemplateChangeRx { get; set; }
-
+        public IDisposable DispouseQueueChangeRx { get; set; }
 
 
 
@@ -24,6 +25,8 @@ namespace Ui
         {
             _soundQueueConsumer = soundQueueConsumer;
             DispouseTemplateChangeRx= _soundQueueConsumer.SoundMessageChangeRx.Subscribe(SoundMessageChangeRxEventHandler);
+            DispouseQueueChangeRx= _soundQueueConsumer.QueueChangeRx.Subscribe(QueueChangeRxEventHandler);
+            _soundQueueConsumer.StartQueue();
 
             InitializeComponent();
         }
@@ -36,7 +39,8 @@ namespace Ui
 
         protected override void OnLoad(EventArgs e)
         {
-            _soundQueueConsumer.StartQueue();
+            btn_Filter.Enabled = false;
+    
             base.OnLoad(e);
         }
 
@@ -62,6 +66,16 @@ namespace Ui
             {
                 Console.WriteLine(ex);
             }
+        }
+
+
+
+        private void QueueChangeRxEventHandler(StatusPlaying statusPlaying)
+        {
+            btn_Filter.InvokeIfNeeded(() =>
+            {
+                btn_Filter.Enabled = (statusPlaying == StatusPlaying.Start);
+            });
         }
 
         #endregion
@@ -97,12 +111,6 @@ namespace Ui
         }
 
 
-        private void btn_PlayAll_Click(object sender, EventArgs e)
-        {
-          _soundQueueConsumer.PlayLIstFiles();
-        }
-
-
         private bool _stopQueue;
         private void btn_StopQueue_Click(object sender, EventArgs e)
         {
@@ -127,18 +135,48 @@ namespace Ui
         private bool _pausePlayer;
         private void btnPause_Click(object sender, EventArgs e)
         {
+
             if (_pausePlayer)
             {
-                _soundQueueConsumer.PlayPlayer();
-                _pausePlayer = false;
-                btnPause.Text = "pause player";
+               var res= _soundQueueConsumer.PlayPlayer();
+                if (res)
+                {
+                    _pausePlayer = false;
+                    btnPause.Text = "pause player";
+                }
+                else//DEBUG
+                {
+                    
+                }
             }
             else
             {
-                _soundQueueConsumer.PausePlayer();
-                _pausePlayer = true;
-                btnPause.Text = "play player";
+               var res= _soundQueueConsumer.PausePlayer();
+               if (res)
+               {
+                  _pausePlayer = true;
+                  btnPause.Text = "play player";
+               }
+                else//DEBUG
+                {
+
+               }
             }
+
+
+
+            //if (_pausePlayer)
+            //{
+            //    _soundQueueConsumer.PlayPlayer();
+            //    _pausePlayer = false;
+            //    btnPause.Text = "pause player";
+            //}
+            //else
+            //{
+            //    _soundQueueConsumer.PausePlayer();
+            //    _pausePlayer = true;
+            //    btnPause.Text = "play player";
+            //}
         }
 
 
@@ -169,6 +207,14 @@ namespace Ui
         private void btn_EraseQueue_Click(object sender, EventArgs e)
         {
             _soundQueueConsumer.EraseQueue();
+        }
+
+
+   
+
+        private void btn_Filter_Click(object sender, EventArgs e)
+        {
+            //TODO: применить фильтр на очереди (оставить только элементы удовлетворяющие фильтру)
         }
     }
 }

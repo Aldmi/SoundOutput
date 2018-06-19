@@ -11,6 +11,7 @@ namespace SoundPlayer.Abstract
 {
     public enum SoundPlayerStatus
     {
+        None,
         Idle,
         Error,
         Stop,

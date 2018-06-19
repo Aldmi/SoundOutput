@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Subjects;
+using SoundPlayer.Abstract;
 using SoundPlayer.Model;
 using SoundQueue.Abstract;
 using SoundQueue.RxModel;
@@ -49,20 +50,20 @@ namespace BL
 
 
 
-        public void PausePlayer()
+        public bool PausePlayer()
         {
-            _queue.PausePlayer();
+           return _queue.PausePlayer();
         }
 
-        public void StopPlayer()
+        public bool StopPlayer()
         {
-            _queue.StopPlayer();
+          return  _queue.StopPlayer();
         }
 
 
-        public void PlayPlayer()
+        public bool PlayPlayer()
         {
-           _queue.PlayPlayer();
+          return _queue.PlayPlayer();
         }
 
 
@@ -102,17 +103,17 @@ namespace BL
                     ТипСообщения = ТипСообщения.Динамическое,
                     ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(10).Take(10)),
                 },
-                new SoundMessage
-                {
-                    Name = "Шаблон 3",
-                    RootId = 12,
-                    ParentId = 1,
-                    ПриоритетГлавный = Priority.Hight,
-                    ПриоритетВторостепенный = PriorityPrecise.Seven,
-                    Язык = NotificationLanguage.Ru,
-                    ТипСообщения = ТипСообщения.Динамическое,
-                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(20).Take(10)),
-                }
+                //new SoundMessage
+                //{
+                //    Name = "Шаблон 3",
+                //    RootId = 12,
+                //    ParentId = 1,
+                //    ПриоритетГлавный = Priority.Hight,
+                //    ПриоритетВторостепенный = PriorityPrecise.Seven,
+                //    Язык = NotificationLanguage.Ru,
+                //    ТипСообщения = ТипСообщения.Динамическое,
+                //    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(20).Take(10)),
+                //}
             };
 
             foreach (var soundMes in soundMessages)
@@ -120,15 +121,6 @@ namespace BL
                _queue.AddItem(soundMes);
             }
         }
-
-
-
-        public async void PlayLIstFiles()
-        {
-             await _queue.PlayTest();
-        }
-
-
 
 
         public void Dispose()

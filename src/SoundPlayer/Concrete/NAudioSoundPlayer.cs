@@ -112,28 +112,35 @@ namespace SoundPlayer.Concrete
         /// <summary>
         /// Проиграть Коллекцию файлов, используя встроенную очередь звуковых элементов
         /// </summary>
+        private IList<SoundItem4NAudio> _queueInternal; //встроенная очередь элементов.
         public async Task<bool> PlayFile(IEnumerable<SoundItem> sounds, CancellationToken cts)
         {
             SetVolume(0.9f);
 
             //Создадим все проигрываемые объекты--------------------------------
-            var queueInternal = sounds.Select(item=> new SoundItem4NAudio(item)).ToList();
+             _queueInternal = sounds.Select(item=> new SoundItem4NAudio(item)).ToList();
 
             //Проиграем все объекты --------------------------------------------
             try
             {
-                foreach (var item in queueInternal)
+                for (var i = 0; i < _queueInternal.Count; i++)
                 {
-                  _playingItem = item;
-                  await PlaySoundItem(item, cts);          //При сработке cts, генерируется исключение и мы попадаем в блок finally.
-                  _playingItem = null;
-                  await Task.Delay(item.SoundItem.ВремяПаузы ?? 0, cts);
+                    var item = _queueInternal[i];
+                    _playingItem = item;
+                    await PlaySoundItem(item,
+                        cts); //При сработке cts, генерируется исключение и мы попадаем в блок finally.
+                    _playingItem = null;
+                    await Task.Delay(item.SoundItem.ВремяПаузы ?? 0, cts);
                 }
+            }
+            catch (Exception ex)
+            {
+                
             }
             finally
             {
                 //Уничтожим все проигранные объекты --------------------------
-                foreach (var elem in queueInternal)
+                foreach (var elem in _queueInternal)
                 {
                     elem.Dispose();
                 }
@@ -198,7 +205,10 @@ namespace SoundPlayer.Concrete
         }
 
 
-
+        /// <summary>
+        /// Плей плера.
+        /// Продолжит воспроизведение, напрмер после команды Pause().
+        /// </summary>
         public void Play()
         {
             if(_playingItem == null)
@@ -211,7 +221,10 @@ namespace SoundPlayer.Concrete
             }
         }
 
-
+        /// <summary>
+        /// Пауза плеера. текущий проигрываемый файл ставит на паузу. 
+        /// Если проигрываемый файл  не установленн, то функция завершает работу.
+        /// </summary>
         public void Pause()
         {
             if (_playingItem == null)
@@ -227,11 +240,14 @@ namespace SoundPlayer.Concrete
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
             }
         }
 
 
+        /// <summary>
+        /// Стоп плеера, удаляет все проигрываемые файлы (item) и  заврешает задачу проигрывания текущего файла.
+        /// Что приводит к немедленной остановке пллера и файлы текущего шаблона теряются.
+        /// </summary>
         public void Stop()
         {
             if (_playingItem == null)
@@ -239,15 +255,16 @@ namespace SoundPlayer.Concrete
 
             try
             {
-                if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Playing)
+                if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Playing ||
+                    _playingItem.WaveOutDevice.PlaybackState == PlaybackState.Paused)
                 {
+                    ClearInternalQueueItems();
                     _playingItem?.WaveOutDevice?.Stop();
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
             }
         }
 
@@ -283,7 +300,12 @@ namespace SoundPlayer.Concrete
                 Console.WriteLine(e);
                 throw;
             }
+        }
 
+
+        public void ClearInternalQueueItems()
+        {
+            _queueInternal.Clear();
         }
 
 
@@ -308,7 +330,7 @@ namespace SoundPlayer.Concrete
         public SoundPlayerStatus GetPlayerStatus()
         {
             if (_playingItem == null)
-                return SoundPlayerStatus.Idle;
+                return SoundPlayerStatus.None;
 
             var state = _playingItem.WaveOutDevice?.PlaybackState;
             switch (state)
