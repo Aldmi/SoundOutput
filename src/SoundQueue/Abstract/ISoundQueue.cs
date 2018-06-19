@@ -13,6 +13,7 @@ namespace SoundQueue.Abstract
     {
         void StartQueue();
         void StopQueue();
+        bool FilterQueue(Func<SoundMessage, bool> filter);
 
         void PausePlayer();
         void StopPlayer();
@@ -20,12 +21,11 @@ namespace SoundQueue.Abstract
 
         void Clear();
         void Erase();
-
         void AddItem(SoundMessage item);
+
         Task PlayTest(); //DEBUG;
 
-         Subject<StatusPlaying> QueueChangeRx { get; }                     //Событие определния начала/конца проигрывания ОЧЕРЕДИ
-         Subject<SoundMessageChangeRx> SoundMessageChangeRx { get; }      //Событие определения начала/конца проигрывания ШАБЛОНА (статики или динамики, подписшик сам отфильтрует нужное срабатывание)
-
+        Subject<StatusPlaying> QueueChangeRx { get; }                     //Событие определния начала/конца проигрывания ОЧЕРЕДИ
+        Subject<SoundMessageChangeRx> SoundMessageChangeRx { get; }      //Событие определения начала/конца проигрывания ШАБЛОНА (статики или динамики, подписшик сам отфильтрует нужное срабатывание)
     }
 }

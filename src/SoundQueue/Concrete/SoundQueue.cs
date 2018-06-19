@@ -14,6 +14,8 @@ using SoundQueue.RxModel;
 
 namespace SoundQueue.Concrete
 {
+
+    //TODO:добавить Функцию, которая текущий щаблон доигрывает и очищает очередь (2 вар- удал статики)
     public class SoundQueue : ISoundQueue
     {
         #region field
@@ -66,7 +68,6 @@ namespace SoundQueue.Concrete
 
 
 
-
         #region Methode
 
         public void StartQueue()
@@ -102,6 +103,14 @@ namespace SoundQueue.Concrete
         }
 
 
+
+        public bool FilterQueue(Func<SoundMessage, bool> filter)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
         public void PausePlayer()
         {
             _player.Pause();
@@ -117,7 +126,6 @@ namespace SoundQueue.Concrete
         {
             _player.Play();
         }
-
 
 
         /// <summary>
@@ -162,6 +170,7 @@ namespace SoundQueue.Concrete
                 }
             }
         }
+
 
         /// <summary>
         /// Очистить очередь
@@ -242,27 +251,6 @@ namespace SoundQueue.Concrete
                 }
             }
         }
-
-
-
-
-
-
-        public async Task PlayTest() //DEBUG
-        {
-            //if (Count > 0)
-            //{
-            //    SoundItem item;
-            //    if (Queue.TryDequeue(out item))
-            //    {
-            //        var res = await _player.PlayFile(item, CancellationToken.None);
-            //    }
-            //}
-        }
-
-
-
-
 
         #endregion
 

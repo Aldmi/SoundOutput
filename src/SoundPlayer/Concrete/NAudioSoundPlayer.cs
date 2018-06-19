@@ -9,18 +9,15 @@ using SoundPlayer.Abstract;
 using SoundPlayer.Model;
 
 
+
 namespace SoundPlayer.Concrete
 {
     public class NAudioSoundPlayer : ISoundPlayer
     {
         #region field
 
-        private object _locker = new object();
-
         private readonly Func<int> _выборУровняГромкостиFunc;
-
-        private IWavePlayer _waveOutDevice;
-        private AudioFileReader _audioFileReader;
+        private SoundItem4NAudio _playingItem;
 
         //private readonly Log _loggerSoundPlayer = new Log("Sound.SoundQueue");
 
@@ -63,13 +60,13 @@ namespace SoundPlayer.Concrete
 
 
 
+
         #region RxEvent
 
         public Subject<string> StatusStringChangeRx { get; } = new Subject<string>(); //Изменение StatusString
         public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>(); //Изменение IsConnect
 
         #endregion
-
 
 
 
@@ -94,31 +91,20 @@ namespace SoundPlayer.Concrete
         /// </summary>
         public async Task<bool> PlayFile(SoundItem soundItem, CancellationToken cts)
         {
-            if (_audioFileReader != null)
-            {
-                _audioFileReader.Dispose();
-                _audioFileReader = null;
-            }
-
+            SetVolume(0.9f);
+            var item = new SoundItem4NAudio(soundItem);
             try
             {
-                var filePath = soundItem.ПутьКФайлу;
-                _audioFileReader = new AudioFileReader(filePath);
-
-                _waveOutDevice?.Stop();
-                _waveOutDevice?.Dispose();
-                _waveOutDevice = new WaveOut();
-                _waveOutDevice.Init(_audioFileReader);
-
-                SetVolume(0.9f);
-                return await Play(cts);
+                _playingItem = item;
+                await PlaySoundItem(item, cts); //При сработке cts, генерируется исключение и мы попадаем в блок finally.
+                _playingItem = null;
             }
-            catch (Exception ex)
+            finally
             {
-                //_loggerSoundPlayer.Info($"PlayFile In player: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
+                item.Dispose();
             }
 
-            return false;
+            return true;
         }
 
 
@@ -126,26 +112,28 @@ namespace SoundPlayer.Concrete
         /// <summary>
         /// Проиграть Коллекцию файлов, используя встроенную очередь звуковых элементов
         /// </summary>
-        private IEnumerable<SoundItem4NAudio> _queueInternal;
-        public async Task<bool> PlayFile(IEnumerable<SoundItem> queueSounds, CancellationToken cts)
+        public async Task<bool> PlayFile(IEnumerable<SoundItem> sounds, CancellationToken cts)
         {
             SetVolume(0.9f);
 
-            //Создадим все проигрываемые объекты---------------------
-            _queueInternal = queueSounds.Select(item=> new SoundItem4NAudio(item)).ToList();
+            //Создадим все проигрываемые объекты--------------------------------
+            var queueInternal = sounds.Select(item=> new SoundItem4NAudio(item)).ToList();
 
-            //Проиграем --------------------------------------------
+            //Проиграем все объекты --------------------------------------------
             try
             {
-                foreach (var item in _queueInternal)
+                foreach (var item in queueInternal)
                 {
-                  await PlayOther(item, cts);          //При сработке cts, генерируется исключение и мы попадаем в блок finally.
+                  _playingItem = item;
+                  await PlaySoundItem(item, cts);          //При сработке cts, генерируется исключение и мы попадаем в блок finally.
+                  _playingItem = null;
+                  await Task.Delay(item.SoundItem.ВремяПаузы ?? 0, cts);
                 }
             }
             finally
             {
-                //Уничтожим все проигрываемые объекты -------------
-                foreach (var elem in _queueInternal)
+                //Уничтожим все проигранные объекты --------------------------
+                foreach (var elem in queueInternal)
                 {
                     elem.Dispose();
                 }
@@ -155,145 +143,86 @@ namespace SoundPlayer.Concrete
         }
 
 
-        /// <summary>
-        /// Проиграть файл
-        /// </summary>
-        /// <returns>true - Успешно запущенно проигрывание</returns>
-        public async Task<bool> Play(CancellationToken cts)
-        {
-            if (_audioFileReader == null)
-            {
-                // _loggerSoundPlayer.Info($"PlayFile In Play methode: AudioFileReader == null !!!!!!!!!!!!!!!!!!!!");
-                return false;
-            }
 
+        /// <summary>
+        /// Проиграть звуковой элемент.
+        /// После старта проигрывания. Запускается задача ожидания конца проигрывания файла.
+        /// </summary>
+        private TaskCompletionSource<PlaybackState> _tcsPlaySoundItem;
+        private Task<PlaybackState> PlaySoundItem(SoundItem4NAudio soundItem4NAudio, CancellationToken ct)
+        {
+            var waveOutDevice = soundItem4NAudio.WaveOutDevice;
+            var cts = new CancellationTokenSource();
+
+            //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ-----------------------------------------------------------------
             try
             {
-                if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
-                    _waveOutDevice.PlaybackState == PlaybackState.Stopped)
+                if (waveOutDevice.PlaybackState == PlaybackState.Paused ||
+                    waveOutDevice.PlaybackState == PlaybackState.Stopped)
                 {
-                    var res= await PlayWithControl(CancellationToken.None);
-                    return true;
-                }
-                return false;
+                    waveOutDevice.Play();
+                }        
             }
             catch (Exception ex)
             {
-                //_loggerSoundPlayer.Info($"PlayFile In Play methode: ECXEPTION {ex.Message} !!!!!!!!!!!!!!!!!!!!");
-                throw;
+                //LOG
+                cts.Cancel();
+                _tcsPlaySoundItem.TrySetException(ex);
             }
+
+            //ЗАПУСК ЗАДАЧИ ОЖИДАНИЯ КОНЦА ВОСПРОИЗВЕДЕНИЯ--------------------------------------------
+            _tcsPlaySoundItem = new TaskCompletionSource<PlaybackState>();
+            Task.Run(() =>
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    if (ct.IsCancellationRequested)                        //ЗАВЕРЕШЕНИЕ ЗАДАЧИ ВНЕШНИМ ТОКЕНОМ ОТМЕНЫ
+                    {
+                        cts.Cancel();
+                        _tcsPlaySoundItem.TrySetCanceled();
+                        break;
+                    }
+
+                    switch (waveOutDevice.PlaybackState)
+                    {
+                        case PlaybackState.Stopped:                       //ЗАВЕРШЕНИЕ ЗАДАЧИ ПО ОКОНЧАНИЮ ПРОИГРЫВАНИЯ
+                            cts.Cancel();
+                            _tcsPlaySoundItem.TrySetResult(waveOutDevice.PlaybackState);
+                            break;
+                    }
+                }
+
+            }, cts.Token);
+
+            return _tcsPlaySoundItem.Task;
         }
 
 
 
         public void Play()
         {
-            if (_waveOutDevice.PlaybackState == PlaybackState.Paused ||
-                _waveOutDevice.PlaybackState == PlaybackState.Stopped)
+            if(_playingItem == null)
+                return;
+
+            if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Paused ||
+                _playingItem.WaveOutDevice.PlaybackState == PlaybackState.Stopped)
             {
-                _waveOutDevice.Play();
+                _playingItem?.WaveOutDevice?.Play();
             }
         }
-
-
-
-        private TaskCompletionSource<PlaybackState> _tcs;
-        private Task<PlaybackState> PlayWithControl(CancellationToken ct)
-        {
-            var cts = new CancellationTokenSource();
-            try
-            {
-                //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
-                _waveOutDevice.Play();
-            }
-            catch (Exception ex)
-            {
-                cts.Cancel();
-            }
-
-            _tcs = new TaskCompletionSource<PlaybackState>();
-            Task.Run(() =>
-            {
-                while (!cts.Token.IsCancellationRequested)
-                {
-                    switch (_waveOutDevice.PlaybackState)
-                    {
-                        case PlaybackState.Stopped:
-                            _tcs.TrySetResult(_waveOutDevice.PlaybackState);
-                            cts.Cancel();
-                            break;
-                    }
-                }
-
-            }, cts.Token);
-
-            return _tcs.Task;
-        }
-
-
-        /// <summary>
-        /// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        /// </summary>
-        private TaskCompletionSource<PlaybackState> _tcs1;
-        private Task<PlaybackState> PlayOther(SoundItem4NAudio soundItem4N, CancellationToken ct)
-        {
-            var waveOutDevice = soundItem4N.WaveOutDevice;
-            var cts = new CancellationTokenSource();
-            try
-            {
-              
-                if (waveOutDevice.PlaybackState == PlaybackState.Paused ||
-                    waveOutDevice.PlaybackState == PlaybackState.Stopped)
-                {
-                    //ЗАПУСК ВОСПРОИЗВЕДЕНИЯ
-                    waveOutDevice.Play();
-                }        
-            }
-            catch (Exception ex)
-            {
-                cts.Cancel();
-            }
-
-            _tcs1 = new TaskCompletionSource<PlaybackState>();
-            Task.Run(() =>
-            {
-                while (!cts.Token.IsCancellationRequested)
-                {
-                    if (ct.IsCancellationRequested)
-                    {
-                        cts.Cancel();
-                        _tcs1.TrySetCanceled();
-                    }
-
-                    switch (waveOutDevice.PlaybackState)
-                    {
-                        case PlaybackState.Stopped:
-                            _tcs1.TrySetResult(waveOutDevice.PlaybackState);
-                            cts.Cancel();
-                            break;
-                    }
-                }
-
-            }, cts.Token);
-
-            return _tcs1.Task;
-        }
-
-
-
-
-
 
 
         public void Pause()
         {
-            if (_audioFileReader == null)
+            if (_playingItem == null)
                 return;
 
             try
             {
-                if (_waveOutDevice.PlaybackState == PlaybackState.Playing)
-                    _waveOutDevice.Pause();
+                if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Playing)
+                {
+                    _playingItem?.WaveOutDevice?.Pause();
+                }
             }
             catch (Exception e)
             {
@@ -303,16 +232,17 @@ namespace SoundPlayer.Concrete
         }
 
 
-
         public void Stop()
         {
-            if (_audioFileReader == null)
+            if (_playingItem == null)
                 return;
 
             try
             {
-                if (_waveOutDevice.PlaybackState == PlaybackState.Playing)
-                    _waveOutDevice.Stop();
+                if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Playing)
+                {
+                    _playingItem?.WaveOutDevice?.Stop();
+                }
             }
             catch (Exception e)
             {
@@ -328,7 +258,7 @@ namespace SoundPlayer.Concrete
         /// <returns></returns>
         public double GetVolume()
         {
-            return _audioFileReader?.Volume ?? 0f;
+            return _playingItem.AudioFileReader?.Volume ?? 0f;
         }
 
 
@@ -338,28 +268,49 @@ namespace SoundPlayer.Concrete
         /// <param name="volume">1.0f is full volume</param>
         public void SetVolume(double volume)
         {
-            if (_audioFileReader != null)
+            if (_playingItem == null)
+                return;
+
+            try
             {
-                _audioFileReader.Volume = (float)volume;
+                if (_playingItem.AudioFileReader != null)
+                {
+                    _playingItem.AudioFileReader.Volume = (float)volume;
+                }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
 
 
         public float GetDuration()
         {
-            return _audioFileReader?.Volume ?? 0f;
+            if (_playingItem == null)
+                return 0;
+
+            return _playingItem.AudioFileReader?.Volume ?? 0f;
         }
 
 
         public long GetCurrentPosition()
         {
-            return _audioFileReader?.Position ?? 0;
+            if (_playingItem == null)
+                return 0;
+
+            return _playingItem.AudioFileReader?.Position ?? 0;
         }
 
 
         public SoundPlayerStatus GetPlayerStatus()
         {
-            var state = _waveOutDevice?.PlaybackState;
+            if (_playingItem == null)
+                return SoundPlayerStatus.Idle;
+
+            var state = _playingItem.WaveOutDevice?.PlaybackState;
             switch (state)
             {
                 case null:
@@ -407,9 +358,7 @@ namespace SoundPlayer.Concrete
             {
                 if (disposing)
                 {
-                    _waveOutDevice?.Stop();
-                    _waveOutDevice?.Dispose();
-                    _audioFileReader?.Dispose();
+                  _playingItem.Dispose();
                 }
             }
             catch (Exception e)
@@ -440,7 +389,6 @@ namespace SoundPlayer.Concrete
 
 
 
-
         #region ctor
 
         public SoundItem4NAudio(SoundItem soundItem)
@@ -464,6 +412,7 @@ namespace SoundPlayer.Concrete
             Dispose(true);
             GC.SuppressFinalize(this);
         }
+
 
         bool _disposed = false;
         protected virtual void Dispose(bool disposing)

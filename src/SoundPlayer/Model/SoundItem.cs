@@ -34,10 +34,8 @@ namespace SoundPlayer.Model
         public int? ParentId { get; set; } //Id родителя, стастика- null, динамика- СостояниеФормируемогоСообщенияИШаблон.Id (как в SoundMessage)
 
         public НастройкиВыводаЗвука НастройкиВыводаЗвука { get; set; }
-
         public string ИмяВоспроизводимогоФайла { get; set; }
         public string ПутьКФайлу { get; set; }
-
         public int? ВремяПаузы { get; set; }
     }
 }
