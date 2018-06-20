@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using BL;
+using SoundPlayer.Model;
 using SoundQueue.Abstract;
 using SoundQueue.RxModel;
 
@@ -210,11 +211,16 @@ namespace Ui
         }
 
 
-   
-
         private void btn_Filter_Click(object sender, EventArgs e)
         {
-            //TODO: применить фильтр на очереди (оставить только элементы удовлетворяющие фильтру)
+            //Оставить только динамику
+            _soundQueueConsumer.FilterQueue(message => message.TypeMessge == ТипСообщения.Динамическое);
+        }
+
+        private void btn_getInfo_Click(object sender, EventArgs e)
+        {
+            var info = _soundQueueConsumer.GetInfo();
+            MessageBox.Show(info);
         }
     }
 }

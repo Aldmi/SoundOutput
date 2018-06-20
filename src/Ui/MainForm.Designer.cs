@@ -39,6 +39,7 @@
             this.btn_ClearQueue = new System.Windows.Forms.Button();
             this.lw_QueueEvent = new System.Windows.Forms.ListView();
             this.btn_Filter = new System.Windows.Forms.Button();
+            this.btn_getInfo = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.chList_LoadedFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -157,11 +158,23 @@
             this.btn_Filter.UseVisualStyleBackColor = true;
             this.btn_Filter.Click += new System.EventHandler(this.btn_Filter_Click);
             // 
+            // btn_getInfo
+            // 
+            this.btn_getInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btn_getInfo.Location = new System.Drawing.Point(307, 599);
+            this.btn_getInfo.Name = "btn_getInfo";
+            this.btn_getInfo.Size = new System.Drawing.Size(199, 53);
+            this.btn_getInfo.TabIndex = 12;
+            this.btn_getInfo.Text = "Get info";
+            this.btn_getInfo.UseVisualStyleBackColor = true;
+            this.btn_getInfo.Click += new System.EventHandler(this.btn_getInfo_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1077, 674);
+            this.Controls.Add(this.btn_getInfo);
             this.Controls.Add(this.btn_Filter);
             this.Controls.Add(this.lw_QueueEvent);
             this.Controls.Add(this.btn_ClearQueue);
@@ -193,5 +206,6 @@
         private System.Windows.Forms.Button btn_ClearQueue;
         private System.Windows.Forms.ListView lw_QueueEvent;
         private System.Windows.Forms.Button btn_Filter;
+        private System.Windows.Forms.Button btn_getInfo;
     }
 }

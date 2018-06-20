@@ -130,7 +130,7 @@ namespace SoundPlayer.Concrete
                     await PlaySoundItem(item,
                         cts); //При сработке cts, генерируется исключение и мы попадаем в блок finally.
                     _playingItem = null;
-                    await Task.Delay(item.SoundItem.ВремяПаузы ?? 0, cts);
+                    await Task.Delay(item.SoundItem.PauseTime ?? 0, cts);
                 }
             }
             catch (Exception ex)
@@ -416,7 +416,7 @@ namespace SoundPlayer.Concrete
         public SoundItem4NAudio(SoundItem soundItem)
         {
             SoundItem = soundItem;
-            var filePath = soundItem.ПутьКФайлу;
+            var filePath = soundItem.PathName;
             AudioFileReader = new AudioFileReader(filePath);
             WaveOutDevice = new WaveOut();
             WaveOutDevice.Init(AudioFileReader);

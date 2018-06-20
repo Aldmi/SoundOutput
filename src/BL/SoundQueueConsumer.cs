@@ -67,6 +67,12 @@ namespace BL
         }
 
 
+        public void FilterQueue(Func<SoundMessage, bool> filter)
+        {
+            _queue.FilterQueue(filter);
+        }
+
+
 
 
 
@@ -74,9 +80,9 @@ namespace BL
         {
             var soundItems = files.Select(file => new SoundItem
             {
-                ПутьКФайлу = file.FullName,
-                ИмяВоспроизводимогоФайла = file.Name,
-                ВремяПаузы = 150
+                PathName = file.FullName,
+                FileName = file.Name,
+                PauseTime = 100
             }).ToList();
 
             var soundMessages= new List<SoundMessage>
@@ -86,34 +92,49 @@ namespace BL
                     Name = "Шаблон 1",
                     RootId = 10,
                     ParentId = 1,
-                    ПриоритетГлавный = Priority.Hight,
-                    ПриоритетВторостепенный = PriorityPrecise.Seven,
-                    Язык = NotificationLanguage.Ru,
-                    ТипСообщения = ТипСообщения.Динамическое,
-                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(0).Take(10)),
+                    PriorityMain = Priority.Hight,
+                    PrioritySecondary = PriorityPrecise.Seven,
+                    Lang = NotificationLanguage.Ru,
+                    TypeMessge = ТипСообщения.Динамическое,
+                    PauseTime = 1000,
+                    QueueItems = new Queue<SoundItem>(soundItems.Skip(0).Take(10)),
                 },
                 new SoundMessage
                 {
                     Name = "Шаблон 2",
                     RootId = 11,
                     ParentId = 1,
-                    ПриоритетГлавный = Priority.Hight,
-                    ПриоритетВторостепенный = PriorityPrecise.Seven,
-                    Язык = NotificationLanguage.Ru,
-                    ТипСообщения = ТипСообщения.Динамическое,
-                    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(10).Take(10)),
+                    PriorityMain = Priority.Hight,
+                    PrioritySecondary = PriorityPrecise.Seven,
+                    Lang = NotificationLanguage.Ru,
+                    TypeMessge = ТипСообщения.Динамическое,
+                    PauseTime = 1000,
+                    QueueItems = new Queue<SoundItem>(soundItems.Skip(10).Take(10)),
                 },
-                //new SoundMessage
-                //{
-                //    Name = "Шаблон 3",
-                //    RootId = 12,
-                //    ParentId = 1,
-                //    ПриоритетГлавный = Priority.Hight,
-                //    ПриоритетВторостепенный = PriorityPrecise.Seven,
-                //    Язык = NotificationLanguage.Ru,
-                //    ТипСообщения = ТипСообщения.Динамическое,
-                //    ОчередьШаблона = new Queue<SoundItem>(soundItems.Skip(20).Take(10)),
-                //}
+                new SoundMessage
+                {
+                    Name = "Шаблон 3 статика",
+                    RootId = 12,
+                    ParentId = 1,
+                    PriorityMain = Priority.Hight,
+                    PrioritySecondary = PriorityPrecise.Seven,
+                    Lang = NotificationLanguage.Ru,
+                    TypeMessge = ТипСообщения.Статическое,
+                    PauseTime = 1000,
+                    QueueItems = new Queue<SoundItem>(soundItems.Skip(20).Take(1)),
+                },
+                new SoundMessage
+                {
+                    Name = "Шаблон 4 статика",
+                    RootId = 12,
+                    ParentId = 1,
+                    PriorityMain = Priority.Hight,
+                    PrioritySecondary = PriorityPrecise.Seven,
+                    Lang = NotificationLanguage.Ru,
+                    TypeMessge = ТипСообщения.Статическое,
+                    PauseTime = 1000,
+                    QueueItems = new Queue<SoundItem>(soundItems.Skip(21).Take(1)),
+                }
             };
 
             foreach (var soundMes in soundMessages)
@@ -121,6 +142,15 @@ namespace BL
                _queue.AddItem(soundMes);
             }
         }
+
+
+        public string GetInfo()
+        {
+            var resStr = "Queue.PlayingMessage=  " +  (_queue.PlayingMessage?.Name ?? "NULL") + "\n";
+            resStr+= "Queue.PlayedMessage=  " + (_queue.PlayedMessage?.Name ?? "NULL") + "\n";
+            return resStr;
+        }
+
 
 
         public void Dispose()

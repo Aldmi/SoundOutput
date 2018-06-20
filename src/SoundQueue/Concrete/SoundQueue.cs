@@ -14,8 +14,6 @@ using SoundQueue.RxModel;
 
 namespace SoundQueue.Concrete
 {
-
-    //TODO:добавить Функцию, которая текущий щаблон доигрывает и очищает очередь (2 вар- удал статики)
     public class SoundQueue : ISoundQueue
     {
         #region field
@@ -34,13 +32,12 @@ namespace SoundQueue.Concrete
         private ConcurrentQueue<SoundMessage> Queue { get; set; } = new ConcurrentQueue<SoundMessage>();
         public IEnumerable<SoundMessage> GetElements => Queue;
         public int Count => Queue.Count;
-        public bool IsWorking { get; private set; }                     //Работа очереди
-        public SoundMessage PlayingMessage { get; private set; }        //текущий проигрываемый файл
-        public SoundMessage PlayedMessage { get; private set; }         //предыдущий проигранный файл
+        public bool IsWorking { get; private set; }                            //Работа очереди
+        public SoundMessage PlayingMessage { get; private set; }               //текущий проигрываемый файл
+        public SoundMessage PlayedMessage { get; private set; }                //предыдущий проигранный файл
+        public SoundPlayerStatus GetPlayerStatus=> _player.GetPlayerStatus();  //статус очереди
 
         public IDisposable DispouseSoundMessageChangeRx { get; set; }
-
-        public SoundPlayerStatus GetPlayerStatus => _player.GetPlayerStatus();
 
         #endregion
 
@@ -83,12 +80,21 @@ namespace SoundQueue.Concrete
                 await CycleInvokeUsingInternalSoundPlayerQueue();
             }, _cts.Token);
 
+            IsWorking = true;
+
             _currentTask.ContinueWith(t =>                   //ОБРАБОТКА ОТМЕНЫ ЗАДАЧИ
             {
                 IsWorking = false;
                 DispouseSoundMessageChangeRx.Dispose();
             },
             TaskContinuationOptions.OnlyOnCanceled);
+
+            _currentTask.ContinueWith(t =>                  //ОБРАБОТКА ЗАВЕРШЕННОЙ ЗАДАЧИ
+            {
+                IsWorking = false;
+                DispouseSoundMessageChangeRx.Dispose();
+            },
+            TaskContinuationOptions.OnlyOnRanToCompletion);
 
             _currentTask.ContinueWith(t =>                  //ОБРАБОТКА Exception В ЗАДАЧИ
             {
@@ -99,7 +105,7 @@ namespace SoundQueue.Concrete
             },
             TaskContinuationOptions.OnlyOnFaulted);
 
-            IsWorking = true;
+
         }
 
 
@@ -109,12 +115,15 @@ namespace SoundQueue.Concrete
         }
 
 
-
-        public bool FilterQueue(Func<SoundMessage, bool> filter)
+        public void FilterQueue(Func<SoundMessage, bool> filter)
         {
-            throw new NotImplementedException();
+           var filteredMessages= Queue.Where(filter);
+           Clear();
+           foreach (var message in filteredMessages)
+           {
+                AddItem(message);
+           }
         }
-
 
 
         public bool PausePlayer()
@@ -146,7 +155,7 @@ namespace SoundQueue.Concrete
                 return;
 
             //делать сортировку по приоритету.
-            if (item.ПриоритетГлавный == Priority.Low)
+            if (item.PriorityMain == Priority.Low)
             {
                 Queue.Enqueue(item);
             }
@@ -165,7 +174,7 @@ namespace SoundQueue.Concrete
 
                 //добавили новый элемент и отсортировали.
                 Queue.Enqueue(item);
-                var ordered = Queue.OrderByDescending(elem => elem.ПриоритетГлавный).ThenByDescending(elem => elem.ПриоритетВторостепенный).ToList();  //ThenByDescending(s=>s.) упорядочевать дополнительно по времени добавления
+                var ordered = Queue.OrderByDescending(elem => elem.PriorityMain).ThenByDescending(elem => elem.PrioritySecondary).ToList();  //ThenByDescending(s=>s.) упорядочевать дополнительно по времени добавления
 
                 //Очистили и заполнили заново очередь
                 Queue = new ConcurrentQueue<SoundMessage>();
@@ -186,15 +195,13 @@ namespace SoundQueue.Concrete
         /// </summary>
         public void Clear()
         {
-            // Queue?.Clear();
             Queue = new ConcurrentQueue<SoundMessage>();
-            //ElementsOnTemplatePlaying?.Clear();
-            //CurrentTemplatePlaying = null;
-            //CurrentSoundMessagePlaying = null;
         }
 
 
-
+        /// <summary>
+        /// Очистить очередь и прервать текущее воспроизведение
+        /// </summary>
         public void Erase()
         {
             Clear();
@@ -215,13 +222,13 @@ namespace SoundQueue.Concrete
                         StatusPlaying = StatusPlaying.Start,
                         SoundMessage = PlayingMessage
                     });
-                    while (PlayingMessage.ОчередьШаблона.Any())
+                    while (PlayingMessage.QueueItems.Any())
                     {
-                        var soundItem = PlayingMessage.ОчередьШаблона.Dequeue();
-                        Debug.WriteLine($"Start >>>>>>>>  {DateTime.Now:T}   {soundItem.ИмяВоспроизводимогоФайла}");
+                        var soundItem = PlayingMessage.QueueItems.Dequeue();
+                        Debug.WriteLine($"Start >>>>>>>>  {DateTime.Now:T}   {soundItem.FileName}");
                         var res = await _player.PlayFile(soundItem, _cts.Token);
-                        Debug.WriteLine($"End <<<<<<<<   {DateTime.Now:T}    {soundItem.ИмяВоспроизводимогоФайла}");
-                        await Task.Delay(soundItem.ВремяПаузы ?? 0, _cts.Token);
+                        Debug.WriteLine($"End <<<<<<<<   {DateTime.Now:T}    {soundItem.FileName}");
+                        await Task.Delay(soundItem.PauseTime ?? 0, _cts.Token);
                     }
                     PlayedMessage = PlayingMessage;
                     PlayingMessage = null;
@@ -236,12 +243,15 @@ namespace SoundQueue.Concrete
 
 
 
+        /// <summary>
+        /// Циклический разматывание очереди сообщений.
+        /// Для проигрывания сообшений  используется внутренняя очредь плеера.
+        /// </summary>
         private async Task CycleInvokeUsingInternalSoundPlayerQueue()
         {
             while (!_cts.IsCancellationRequested)
             {
                 SoundMessage message;
-
                 if (Queue.TryDequeue(out message))
                 {
                     PlayingMessage = message;
@@ -251,7 +261,7 @@ namespace SoundQueue.Concrete
                         SoundMessage = PlayingMessage
                     });
 
-                    var res = await _player.PlayFile(PlayingMessage.ОчередьШаблона, _cts.Token);
+                    var res = await _player.PlayFile(PlayingMessage.QueueItems, _cts.Token);
                     PlayedMessage = PlayingMessage;
                     PlayingMessage = null;
                     SoundMessageChangeRx.OnNext(new SoundMessageChangeRx
@@ -309,6 +319,7 @@ namespace SoundQueue.Concrete
         {
             StopQueue();
             _player?.Dispose();
+            DispouseSoundMessageChangeRx.Dispose();
         }
 
         #endregion
