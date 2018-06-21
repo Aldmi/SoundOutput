@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Abstract\ISoundQueue.cs" />
+    <Compile Include="Model\SoundMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Concrete\SoundQueue.cs" />
     <Compile Include="RxModel\SoundMessageChangeRx.cs" />

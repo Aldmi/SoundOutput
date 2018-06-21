@@ -63,8 +63,8 @@ namespace SoundPlayer.Concrete
 
         #region RxEvent
 
-        public Subject<string> StatusStringChangeRx { get; } = new Subject<string>(); //Изменение StatusString
-        public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>(); //Изменение IsConnect
+        public Subject<string> StatusStringChangeRx { get; } = new Subject<string>();  //Изменение StatusString
+        public Subject<bool> IsConnectChangeRx { get; } = new Subject<bool>();         //Изменение IsConnect
 
         #endregion
 
@@ -103,7 +103,6 @@ namespace SoundPlayer.Concrete
             {
                 item.Dispose();
             }
-
             return true;
         }
 
@@ -118,7 +117,7 @@ namespace SoundPlayer.Concrete
             SetVolume(0.9f);
 
             //Создадим все проигрываемые объекты--------------------------------
-             _queueInternal = sounds.Select(item=> new SoundItem4NAudio(item)).ToList();
+            _queueInternal = sounds.Select(item => new SoundItem4NAudio(item)).ToList();
 
             //Проиграем все объекты --------------------------------------------
             try
@@ -127,15 +126,10 @@ namespace SoundPlayer.Concrete
                 {
                     var item = _queueInternal[i];
                     _playingItem = item;
-                    await PlaySoundItem(item,
-                        cts); //При сработке cts, генерируется исключение и мы попадаем в блок finally.
+                    await PlaySoundItem(item, cts); //При сработке cts, генерируется исключение и мы попадаем в блок finally.
                     _playingItem = null;
                     await Task.Delay(item.SoundItem.PauseTime ?? 0, cts);
                 }
-            }
-            catch (Exception ex)
-            {
-                
             }
             finally
             {
@@ -153,7 +147,7 @@ namespace SoundPlayer.Concrete
 
         /// <summary>
         /// Проиграть звуковой элемент.
-        /// После старта проигрывания. Запускается задача ожидания конца проигрывания файла.
+        /// После старта проигрывания запускается задача ожидания конца проигрывания файла.
         /// </summary>
         private TaskCompletionSource<PlaybackState> _tcsPlaySoundItem;
         private Task<PlaybackState> PlaySoundItem(SoundItem4NAudio soundItem4NAudio, CancellationToken ct)
@@ -168,7 +162,7 @@ namespace SoundPlayer.Concrete
                     waveOutDevice.PlaybackState == PlaybackState.Stopped)
                 {
                     waveOutDevice.Play();
-                }        
+                }
             }
             catch (Exception ex)
             {
@@ -211,7 +205,7 @@ namespace SoundPlayer.Concrete
         /// </summary>
         public void Play()
         {
-            if(_playingItem == null)
+            if (_playingItem == null)
                 return;
 
             if (_playingItem.WaveOutDevice.PlaybackState == PlaybackState.Paused ||
@@ -269,10 +263,20 @@ namespace SoundPlayer.Concrete
         }
 
 
+
         /// <summary>
-        /// 
+        /// Очистить очередь items.
         /// </summary>
-        /// <returns></returns>
+        private void ClearInternalQueueItems()
+        {
+            _queueInternal.Clear();
+        }
+
+
+
+        /// <summary>
+        /// Вернуть текущий уровень звука.
+        /// </summary>
         public double GetVolume()
         {
             return _playingItem.AudioFileReader?.Volume ?? 0f;
@@ -280,7 +284,7 @@ namespace SoundPlayer.Concrete
 
 
         /// <summary>
-        /// 
+        /// Установить уровень звука.
         /// </summary>
         /// <param name="volume">1.0f is full volume</param>
         public void SetVolume(double volume)
@@ -295,27 +299,25 @@ namespace SoundPlayer.Concrete
                     _playingItem.AudioFileReader.Volume = (float)volume;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine(e);
-                throw;
+                //LOG
             }
         }
 
 
-        public void ClearInternalQueueItems()
-        {
-            _queueInternal.Clear();
-        }
 
-
+        /// <summary>
+        /// Вернуть длительность проигрываемого item в сек.
+        /// </summary>
         public float GetDuration()
         {
             if (_playingItem == null)
                 return 0;
 
-            return _playingItem.AudioFileReader?.Volume ?? 0f;
+            return (float)_playingItem.AudioFileReader.TotalTime.TotalSeconds;
         }
+
 
 
         public long GetCurrentPosition()
@@ -327,6 +329,10 @@ namespace SoundPlayer.Concrete
         }
 
 
+        /// <summary>
+        /// Вренуть статус проигрывания.
+        /// Если item не установленн, то статус NONE.
+        /// </summary>
         public SoundPlayerStatus GetPlayerStatus()
         {
             if (_playingItem == null)
@@ -351,6 +357,9 @@ namespace SoundPlayer.Concrete
         }
 
 
+        /// <summary>
+        /// Переподключение к плееру.
+        /// </summary>
         public async Task ReConnect()
         {
             await Task.CompletedTask;
@@ -376,21 +385,13 @@ namespace SoundPlayer.Concrete
             if (_disposed)
                 return;
 
-            try
+            if (disposing)
             {
-                if (disposing)
-                {
-                  _playingItem.Dispose();
-                }
-            }
-            catch (Exception e)
-            {
-              
+                _playingItem.Dispose();
             }
 
             _disposed = true;
         }
-
 
         #endregion
     }
@@ -442,18 +443,12 @@ namespace SoundPlayer.Concrete
             if (_disposed)
                 return;
 
-            try
+            if (disposing)
             {
-                if (disposing)
-                {
-                    WaveOutDevice?.Dispose();
-                    AudioFileReader?.Dispose();
-                }
+                WaveOutDevice?.Dispose();
+                AudioFileReader?.Dispose();
             }
-            catch (Exception e)
-            {
 
-            }
             _disposed = true;
         }
 

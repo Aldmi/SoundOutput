@@ -26,7 +26,9 @@ namespace SoundPlayer.Model
         public bool ТолькоПоВнутреннемуКаналу { get; set; }
     }
 
-
+    /// <summary>
+    /// Проигрываемый звуковой элемент.
+    /// </summary>
     public class SoundItem
     {
         public ТипСообщения ТипСообщения { get; set; } //Определяет в каком списке искать сообщение. (как в SoundMessage)

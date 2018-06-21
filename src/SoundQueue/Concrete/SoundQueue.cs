@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using SoundPlayer.Abstract;
 using SoundPlayer.Model;
 using SoundQueue.Abstract;
+using SoundQueue.Model;
 using SoundQueue.RxModel;
 
 
@@ -18,7 +19,7 @@ namespace SoundQueue.Concrete
     {
         #region field
 
-        private Task _currentTask;
+        private Task _currentTask;                             //задача в которой разматывается очередь
         private readonly ISoundPlayer _player;
         private CancellationTokenSource _cts;
 
@@ -69,6 +70,9 @@ namespace SoundQueue.Concrete
 
         #region Methode
 
+        /// <summary>
+        /// Создания новой задачи разматывания очереди.
+        /// </summary>
         public void StartQueue()
         {
             DispouseSoundMessageChangeRx = SoundMessageChangeRx.Subscribe(DefinitionStartStopQueueRxEventHandler);
@@ -104,17 +108,23 @@ namespace SoundQueue.Concrete
                 DispouseSoundMessageChangeRx.Dispose();
             },
             TaskContinuationOptions.OnlyOnFaulted);
-
-
         }
 
 
+        /// <summary>
+        /// Останов разматывания очереди.
+        /// Приводит к завершению всех задач (Останов проигрывания звука плеером)
+        /// </summary>
         public void StopQueue()
         {
             _cts?.Cancel();
         }
 
 
+        /// <summary>
+        /// Применение фильтра на очередь.
+        /// Текущее проигрывемое сообщение не подвергается фильтрации
+        /// </summary>
         public void FilterQueue(Func<SoundMessage, bool> filter)
         {
            var filteredMessages= Queue.Where(filter);
@@ -126,6 +136,10 @@ namespace SoundQueue.Concrete
         }
 
 
+        /// <summary>
+        /// Пауза плеера
+        /// </summary>
+        /// <returns>если плеер поставленн на паузу то true</returns>
         public bool PausePlayer()
         {
             _player.Pause();
@@ -133,12 +147,22 @@ namespace SoundQueue.Concrete
         }
 
 
+
+        /// <summary>
+        /// Стоп плеера
+        /// </summary>
+        /// <returns>если плеер поставленн на стоп то true</returns>
         public bool StopPlayer()
         {
             _player.Stop();
             return GetPlayerStatus == SoundPlayerStatus.Stop;
         }
 
+
+        /// <summary>
+        /// Плей плеера
+        /// </summary>
+        /// <returns>если плеер поставленн на плей то true</returns>
         public bool PlayPlayer()
         {
             _player.Play();
@@ -147,7 +171,8 @@ namespace SoundQueue.Concrete
 
 
         /// <summary>
-        /// Добавить элемент в очередь
+        /// Добавить элемент в очередь.
+        /// Сортируя по 2-ум приоритетам.
         /// </summary>
         public void AddItem(SoundMessage item)
         {
@@ -191,7 +216,7 @@ namespace SoundQueue.Concrete
 
 
         /// <summary>
-        /// Очистить очередь
+        /// Очистить очередь.
         /// </summary>
         public void Clear()
         {
@@ -200,7 +225,7 @@ namespace SoundQueue.Concrete
 
 
         /// <summary>
-        /// Очистить очередь и прервать текущее воспроизведение
+        /// Очистить очередь и прервать текущее воспроизведение.
         /// </summary>
         public void Erase()
         {
@@ -209,6 +234,11 @@ namespace SoundQueue.Concrete
         }
 
 
+
+        /// <summary>
+        /// Циклический разматывание очереди сообщений.
+        /// Сообщение тоже раскладывается на items и проигрывается плеером каждый item.
+        /// </summary>
         private async Task CycleInvoke()
         {
             while (!_cts.IsCancellationRequested)
@@ -269,6 +299,7 @@ namespace SoundQueue.Concrete
                         StatusPlaying = StatusPlaying.Stop,
                         SoundMessage = PlayedMessage
                     });
+                    await Task.Delay(message.PauseTime, _cts.Token);
                 }
             }
         }
@@ -281,7 +312,7 @@ namespace SoundQueue.Concrete
         #region RxEventHandler
 
         /// <summary>
-        /// Вычисляет событие начала/конца проигрывания очереди
+        /// Вычисляет событие начала/конца проигрывания очереди.
         /// </summary>
         private bool _isEmptyQueueOld = true;//наличие элемента в очереди на ПРЕДЫДУЩЕМ шаге
         private void DefinitionStartStopQueueRxEventHandler(SoundMessageChangeRx soundMessageChangeRx)
@@ -304,8 +335,6 @@ namespace SoundQueue.Concrete
                     }
                     break;
             }
-
-
         }
 
         #endregion

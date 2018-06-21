@@ -214,7 +214,7 @@ namespace Ui
         private void btn_Filter_Click(object sender, EventArgs e)
         {
             //Оставить только динамику
-            _soundQueueConsumer.FilterQueue(message => message.TypeMessge == ТипСообщения.Динамическое);
+            _soundQueueConsumer.FilterQueue(message => message.TypeMessge == ТипСообщения.Статическое);
         }
 
         private void btn_getInfo_Click(object sender, EventArgs e)

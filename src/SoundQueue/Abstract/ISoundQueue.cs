@@ -3,6 +3,7 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using SoundPlayer.Abstract;
 using SoundPlayer.Model;
+using SoundQueue.Model;
 using SoundQueue.RxModel;
 
 namespace SoundQueue.Abstract

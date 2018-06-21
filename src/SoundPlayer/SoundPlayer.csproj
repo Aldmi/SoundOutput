@@ -56,7 +56,6 @@
     <Compile Include="Concrete\NAudioSoundPlayer.cs" />
     <Compile Include="Converters\IFileNameConverter.cs" />
     <Compile Include="Model\SoundItem.cs" />
-    <Compile Include="Model\SoundMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

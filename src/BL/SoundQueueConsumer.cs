@@ -7,6 +7,7 @@ using System.Reactive.Subjects;
 using SoundPlayer.Abstract;
 using SoundPlayer.Model;
 using SoundQueue.Abstract;
+using SoundQueue.Model;
 using SoundQueue.RxModel;
 
 namespace BL
@@ -82,7 +83,7 @@ namespace BL
             {
                 PathName = file.FullName,
                 FileName = file.Name,
-                PauseTime = 100
+                PauseTime = 70
             }).ToList();
 
             var soundMessages= new List<SoundMessage>

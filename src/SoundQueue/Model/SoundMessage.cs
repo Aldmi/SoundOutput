@@ -1,7 +1,12 @@
 ﻿using System.Collections.Generic;
+using SoundPlayer.Model;
 
-namespace SoundPlayer.Model
+namespace SoundQueue.Model
 {
+    /// <summary>
+    /// Звукщвое сообщение.
+    /// Состоит из очереди проигрываемых элементов.
+    /// </summary>
     public class SoundMessage
     {
         public string Name { get; set; }                 //Название сообщения
